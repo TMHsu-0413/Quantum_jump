@@ -3,51 +3,45 @@
 #include <bits/stdc++.h>
 using namespace std;
 
+class Compare {
+public:
+  bool operator()(P &a, P &b) { return a.fidelity > b.fidelity; }
+};
+
 vector<int> path;               // path走法，假設是[0,1,2,....node]
 vector<int> memory;             // 單點的memory
 vector<array<double, 2>> point; // 點的座標，用來計算距離
 
 unordered_map<int, unordered_map<int, vector<P>>> memo;
-unordered_map<double, unordered_map<int, vector<double>>> purify_memo;
+unordered_map<double, unordered_map<int, double>> purify_memo;
 int mx_group_size = 0;
 
-// 回傳為長度為2的vector<double> ，
-// v[0]為最大的fidelity，v[1]為最大fidelity那組的成功機率
-vector<double> dp_purify(double fidelity, int times, int distance) {
+double dp_purify(double fidelity, int times) {
   if (times == 1)
-    return {fidelity, entangle_success_prob(distance)};
+    return fidelity;
+  else if (times == 2)
+    return purify_fidelity(fidelity, fidelity);
 
   if (purify_memo.find(fidelity) != purify_memo.end() &&
       purify_memo[fidelity].find(times) != purify_memo[fidelity].end())
     return purify_memo[fidelity][times];
 
-  double ans_fid = 0;
-  double ans_prob = 0;
-  for (int i = 1; i <= (times / 2); i++) {
-    vector<double> left = dp_purify(fidelity, i, distance);
-    vector<double> right = dp_purify(fidelity, times - i, distance);
-    double split_purify = purify_fidelity(left[0], right[0]);
-    double split_prob =
-        purify_success_prob(left[0], right[0]) * left[1] * right[1];
+  double ans = 0;
+  for (int i = 1; i <= (times / 2); i++)
+    ans = max(ans, purify_fidelity(dp_purify(fidelity, i),
+                                   dp_purify(fidelity, times - i)));
 
-    if (ans_fid < split_purify) {
-      ans_fid = split_purify;
-      ans_prob = split_prob;
-    }
-  }
-
-  return purify_memo[fidelity][times] = {ans_fid, ans_prob};
+  return purify_memo[fidelity][times] = ans;
 }
 
-// 找到vector<P> a內，第一個a.fidelity >= fid的index
-int lower_bound(vector<P> &a, double fid) {
+int lower_bound(vector<P> &a, double fid1) {
   int l = 0, r = a.size() - 1;
   int ans = a.size();
   while (l <= r) {
     int mid = (l + r) / 2;
 
     double cur_fid = a[mid].fidelity;
-    if (cur_fid >= fid) {
+    if (cur_fid >= fid1) {
       ans = mid;
       r = mid - 1;
     } else
@@ -57,7 +51,6 @@ int lower_bound(vector<P> &a, double fid) {
   return ans;
 }
 
-// 計算距離用的beta，可以用desmos拉就好
 double cal_beta() {
   double l = 0, r = 0.5;
   double ans = 0;
@@ -85,7 +78,7 @@ void init_path(int node) {
 
   for (int i = 0; i < node; i++) {
     path.push_back(i);
-    int mem = rand() % (memory_up - memory_low + 1) + memory_low;
+    int mem = rand() % (memory_up - memory_low) + memory_low;
     memory.push_back(mem);
     double x = rand() % (coor_up - coor_low) + coor_low;
     double y = rand() % (coor_up - coor_low) + coor_low;
@@ -93,7 +86,6 @@ void init_path(int node) {
   }
 }
 
-// swapping跟purify選擇的dp
 vector<P> dp(int l, int r) {
   if (l >= r)
     return {};
@@ -101,6 +93,7 @@ vector<P> dp(int l, int r) {
     return memo[l][r];
 
   vector<P> res;
+  priority_queue<P, vector<P>, Compare> pq;
   // 分段
   for (int m = l + 1; m < r; m++) {
     // 不能在這個點swapping
@@ -112,82 +105,74 @@ vector<P> dp(int l, int r) {
 
     for (auto &c : left) {
       double f1 = c.fidelity;
-      double s1 = c.success_prob;
       vector<int> path1 = c.path;
       vector<int> memory1 = c.memory;
 
       int idx = lower_bound(right, at_least_to_meet_threshold(f1, threshold));
-      for (int j = idx; j < right.size(); j++) {
-        P d = right[j];
+      for (int i = idx; i < right.size(); i++) {
+        P d = right[i];
         double f2 = d.fidelity;
-        double s2 = d.success_prob;
         vector<int> memory2 = d.memory;
 
         double fid = swapping_fidelity(f1, f2);
         if (fid < threshold)
           continue;
-        else if ((memory1.back() + memory2.front()) > memory[m])
+        else if (memory1.back() + memory2.front() > memory[i])
           continue;
 
         vector<int> temp_path = path1;
         vector<int> temp_memory = memory1;
-        double success_prob = s1 * s2 * swapping_success_prob();
-
         temp_memory.back() += memory2.front();
 
-        for (int k = 1; k < d.path.size(); k++) {
-          temp_path.push_back(d.path[k]);
-          temp_memory.push_back(d.memory[k]);
+        for (int j = 1; j < d.path.size(); j++) {
+          temp_path.push_back(d.path[j]);
+          temp_memory.push_back(d.memory[j]);
         }
-
-        res.push_back(P(fid, temp_path, temp_memory, success_prob));
+        pq.push(P(fid, temp_path, temp_memory));
+        if (pq.size() > k)
+          pq.pop();
       }
     }
   }
 
   // 跳關
   for (int m = min(memory[l], memory[r]); m > 0; m--) {
-    double distance = dis(point[l], point[r]);
-    double single_fidelity = fidelity(distance, beta);
-    vector<double> purify_res = dp_purify(single_fidelity, m, distance);
-
-    res.push_back(P(purify_res[0], {l, r}, {m, m}, purify_res[1]));
+    double single_fidelity = fidelity(dis(point[l], point[r]), beta);
+    double purify_fidelity = dp_purify(single_fidelity, m);
+    pq.push(P(purify_fidelity, {l, r}, {m, m}));
+    if (pq.size() > k)
+      pq.pop();
   }
-  sort(res.begin(), res.end(),
-       [](P &a, P &b) { return a.fidelity < b.fidelity; });
 
+  while (!pq.empty()) {
+    P temp = pq.top();
+    pq.pop();
+    res.push_back(temp);
+  }
   mx_group_size = max(mx_group_size, (int)res.size());
   return memo[l][r] = res;
 }
 
 void print(vector<P> &ans) {
-  for (int i = 0; i < node; i++) {
-    cout << memory[i] << " ";
-  }
-  cout << endl;
-  for (int i = 0; i < ans.size(); i++) {
-    auto c = ans[i];
-    if (c.fidelity < threshold)
-      continue;
-    cout << "fidelity: " << c.fidelity << " prob: " << c.success_prob << " ";
+  for (auto &c : ans) {
+    cout << c.fidelity << " ";
     cout << "path = {";
-    for (int j = 0; j < c.path.size(); j++) {
-      if (j == (c.path.size() - 1))
-        cout << c.path[j];
+    for (int i = 0; i < c.path.size(); i++) {
+      if (i == (c.path.size() - 1))
+        cout << c.path[i];
       else
-        cout << c.path[j] << "->";
+        cout << c.path[i] << "->";
     }
     cout << "}, {";
 
-    for (int j = 0; j < c.memory.size(); j++) {
-      if (j == c.memory.size() - 1)
-        cout << c.memory[j];
+    for (int i = 0; i < c.memory.size(); i++) {
+      if (i == c.memory.size() - 1)
+        cout << c.memory[i];
       else
-        cout << c.memory[j] << ", ";
+        cout << c.memory[i] << ", ";
     }
     cout << "}" << endl;
   }
-
   cout << "maximum group size : " << mx_group_size << endl;
 }
 
