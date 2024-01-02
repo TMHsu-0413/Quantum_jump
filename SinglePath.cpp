@@ -8,9 +8,10 @@ vector<int> memory;             // 單點的memory
 vector<array<double, 2>> point; // 點的座標，用來計算距離
 
 unordered_map<int, unordered_map<int, vector<P>>> memo;
-unordered_map<double, unordered_map<int, vector<double>>> purify_memo;
 int mx_group_size = 0;
 
+/*
+unordered_map<double, unordered_map<int, vector<double>>> purify_memo;
 // 回傳為長度為2的vector<double> ，
 // v[0]為最大的fidelity，v[1]為最大fidelity那組的成功機率
 vector<double> dp_purify(double fidelity, int times, int distance) {
@@ -39,6 +40,8 @@ vector<double> dp_purify(double fidelity, int times, int distance) {
   return purify_memo[fidelity][times] = {ans_fid, ans_prob};
 }
 
+*/
+
 // 找到vector<P> a內，第一個a.fidelity >= fid的index
 int lower_bound(vector<P> &a, double fid) {
   int l = 0, r = a.size() - 1;
@@ -57,6 +60,7 @@ int lower_bound(vector<P> &a, double fid) {
   return ans;
 }
 
+/*
 // 計算距離用的beta，可以用desmos拉就好
 double cal_beta() {
   double l = 0, r = 0.5;
@@ -74,13 +78,14 @@ double cal_beta() {
   }
   return ans;
 }
+*/
 
 void init_path(int node) {
   path.clear();
   memory.clear();
   memo.clear();
   point.clear();
-  purify_memo.clear();
+  // purify_memo.clear();
   mx_group_size = 0;
 
   for (int i = 0; i < node; i++) {
@@ -146,12 +151,17 @@ vector<P> dp(int l, int r) {
   }
 
   // 跳關
-  for (int m = min(memory[l], memory[r]); m > 0; m--) {
+  for (int m = 1; m <= min(memory[l], memory[r]); m *= 2) {
     double distance = dis(point[l], point[r]);
-    double single_fidelity = fidelity(distance, beta);
-    vector<double> purify_res = dp_purify(single_fidelity, m, distance);
+    double jump_fidelity = fidelity(distance, beta);
+    double success_prob = pow(entangle_success_prob(distance), m);
 
-    res.push_back(P(purify_res[0], {l, r}, {m, m}, purify_res[1]));
+    for (int j = m; j > 1; j /= 2) {
+      success_prob *= pow(jump_fidelity, j / 2);
+      jump_fidelity = purify_fidelity(jump_fidelity, jump_fidelity);
+    }
+
+    res.push_back(P(jump_fidelity, {l, r}, {m, m}, success_prob));
   }
   sort(res.begin(), res.end(),
        [](P &a, P &b) { return a.fidelity < b.fidelity; });
@@ -192,7 +202,6 @@ void print(vector<P> &ans) {
 }
 
 int main() {
-  beta = cal_beta();
   srand(time(NULL));
   double time = 0;
   for (int i = 0; i < times; i++) {
