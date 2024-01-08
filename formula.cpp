@@ -16,6 +16,9 @@ public:
       : fidelity(f), path(p), memory(m), success_prob(s) {
     ;
   }
+  bool operator<(const P &b) const{
+    return fidelity < b.fidelity;
+  }
 };
 
 double fidelity(double dis, double beta) {
