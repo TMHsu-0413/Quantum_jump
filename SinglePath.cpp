@@ -40,12 +40,13 @@ void init_path(int node) {
 
   for (int i = 0; i < node; i++) {
     path.push_back(i);
-    // int mem = rand() % (memory_up - memory_low + 1) + memory_low;
-    // double x = rand() % (coor_up - coor_low) + coor_low;
-    // double y = rand() % (coor_up - coor_low) + coor_low;
-    memory.push_back(8);
-    double x = i*10;
-    double y = i*10;
+    int mem = rand() % (memory_up - memory_low + 1) + memory_low;
+    memory.push_back(mem);
+    double x = rand() % (coor_up - coor_low) + coor_low;
+    double y = rand() % (coor_up - coor_low) + coor_low;
+    //memory.push_back(8);
+    //double x = i*1;
+    //double y = i*1;
     double swapping_probaility = swapping_success_prob();
     swapping_prob.push_back(swapping_probaility);
     point.push_back({x, y});
@@ -60,7 +61,6 @@ vector<P> dp(int l, int r) {
     return memo[l][r];
 
   set<P> res_s;
-  vector<P> res;
 
   // 分段
   for (int m = l + 1; m < r; m++) {
@@ -85,7 +85,7 @@ vector<P> dp(int l, int r) {
         vector<int> memory2 = d.memory;
 
         double fid = swapping_fidelity(f1, f2);
-        if (fid < threshold)
+        if (fid < threshold) // 若swapping後小於threshold，則後續怎麼做也都補不到threshold
           continue;
         if ((memory1.back() + memory2.front()) > memory[m])
           continue;
@@ -100,8 +100,9 @@ vector<P> dp(int l, int r) {
           temp_path.push_back(d.path[k]);
           temp_memory.push_back(d.memory[k]);
         }
-        P temp(fid, temp_path, temp_memory, success_prob);
-        res_s.insert(temp);
+        P temp(fid,temp_path,temp_memory,success_prob);
+        if (res_s.find(temp) == res_s.end())
+          res_s.insert(temp);
         // res.push_back(P(fid, temp_path, temp_memory, success_prob));
       }
     }
@@ -112,17 +113,22 @@ vector<P> dp(int l, int r) {
     double distance = dis(point[l], point[r]);
     double jump_fidelity = fidelity(distance, beta);
     double success_prob = pow(entangle_success_prob(distance), m);
+    if (jump_fidelity < 0.5) // purify只會越來越差
+      continue;
 
     for (int j = m; j > 1; j /= 2) {
       success_prob *= pow(purify_success_prob(jump_fidelity,jump_fidelity), j / 2);
       jump_fidelity = purify_fidelity(jump_fidelity, jump_fidelity);
     }
-
+    if (jump_fidelity < threshold)
+      continue;
     // res.push_back(P(jump_fidelity, {l, r}, {m, m}, success_prob));
-      P temp(jump_fidelity, {l,r}, {m,m}, success_prob);
+    vector<int> temp_path = {l,r}, temp_memory = {m,m};
+    P temp(jump_fidelity,temp_path,temp_memory,success_prob);
+    if (res_s.find(temp) == res_s.end())
       res_s.insert(temp);
   }
-
+  vector<P> res;
   for(auto &c:res_s)
     res.push_back(c);
 
@@ -136,29 +142,20 @@ void print(vector<P> &ans) {
   for (int i = 0; i < node; i++) {
     cout << memory[i] << " ";
   }
+  cout<<"滿足fidelity限制的有"<<ans.size()<<"組"<<endl;
   cout << endl;
-  for (int i = 0; i < ans.size(); i++) {
-    auto c = ans[i];
-    if (c.fidelity < threshold)
-      continue;
-    cout << "fidelity: " << c.fidelity << " prob: " << c.success_prob << " ";
-    cout << "path = {";
-    for (int j = 0; j < c.path.size(); j++) {
-      if (j == (c.path.size() - 1))
-        cout << c.path[j];
-      else
-        cout << c.path[j] << "->";
-    }
-    cout << "}, {";
+  cout << "fidelity前10大的: "<<endl;
+  for (int i = ans.size()-1; i >= max(0,(int)ans.size()-10); i--)
+    cout<<ans[i];
 
-    for (int j = 0; j < c.memory.size(); j++) {
-      if (j == c.memory.size() - 1)
-        cout << c.memory[j];
-      else
-        cout << c.memory[j] << ", ";
-    }
-    cout << "}" << endl;
-  }
+  cout<<endl;
+  sort(ans.begin(),ans.end(),[](const P&a, const P&b){
+    return a.success_prob > b.success_prob;
+  });
+
+  cout << "success prob前10大的: "<<endl;
+  for(int i=0; i<min((int)ans.size(),10); i++)
+    cout<<ans[i];
 }
 
 int main() {

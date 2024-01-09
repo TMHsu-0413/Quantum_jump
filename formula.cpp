@@ -19,6 +19,27 @@ public:
   bool operator<(const P &b) const{
     return fidelity < b.fidelity;
   }
+
+  friend ostream& operator<<(ostream &cout,const P& p){
+    cout << fixed << setprecision(6) << "fidelity: " << p.fidelity << "\tprob: " << p.success_prob;
+    cout << "\t path = {";
+    for (int j = 0; j < p.path.size(); j++) {
+      if (j == (p.path.size() - 1))
+        cout << p.path[j];
+      else
+        cout << p.path[j] << "->";
+    }
+    cout << "}, {";
+
+    for (int j = 0; j < p.memory.size(); j++) {
+      if (j == p.memory.size() - 1)
+        cout << p.memory[j];
+      else
+        cout << p.memory[j] << ", ";
+    }
+    cout << "}" << endl;
+    return cout;
+  }
 };
 
 double fidelity(double dis, double beta) {
