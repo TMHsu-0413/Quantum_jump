@@ -16,12 +16,10 @@ public:
       : fidelity(f), path(p), memory(m), success_prob(s) {
     ;
   }
-  bool operator<(const P &b) const{
-    return fidelity < b.fidelity;
-  }
 
-  friend ostream& operator<<(ostream &cout,const P& p){
-    cout << fixed << setprecision(6) << "fidelity: " << p.fidelity << "\tprob: " << p.success_prob;
+  friend ostream &operator<<(ostream &cout, const P &p) {
+    cout << fixed << setprecision(6) << "fidelity: " << p.fidelity
+         << "\tprob: " << p.success_prob;
     cout << "\t path = {";
     for (int j = 0; j < p.path.size(); j++) {
       if (j == (p.path.size() - 1))
@@ -40,6 +38,11 @@ public:
     cout << "}" << endl;
     return cout;
   }
+};
+
+class compareFidelity {
+public:
+  bool operator()(P &a, P &b) { return a.fidelity > b.fidelity; }
 };
 
 double fidelity(double dis, double beta) {
@@ -77,3 +80,13 @@ double purify_success_prob(double fid1, double fid2) {
 }
 
 double swapping_success_prob() { return (1 - 0.8) * rand() / RAND_MAX + 0.8; }
+
+vector<P> pq_to_vector(priority_queue<P, vector<P>, compareFidelity> &pq) {
+  vector<P> res;
+  while (!pq.empty()) {
+    P c = pq.top();
+    pq.pop();
+    res.push_back(c);
+  }
+  return res;
+}

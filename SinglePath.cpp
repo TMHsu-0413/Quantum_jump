@@ -1,6 +1,7 @@
 #include "formula.cpp"
 #include "parameter.cpp"
 #include <bits/stdc++.h>
+#include <iomanip>
 using namespace std;
 
 vector<int> path;               // path走法，假設是[0,1,2,....node]
@@ -40,13 +41,13 @@ void init_path(int node) {
 
   for (int i = 0; i < node; i++) {
     path.push_back(i);
-    int mem = rand() % (memory_up - memory_low + 1) + memory_low;
-    memory.push_back(mem);
-    double x = rand() % (coor_up - coor_low) + coor_low;
-    double y = rand() % (coor_up - coor_low) + coor_low;
-    //memory.push_back(8);
-    //double x = i*1;
-    //double y = i*1;
+    // int mem = rand() % (memory_up - memory_low + 1) + memory_low;
+    // memory.push_back(mem);
+    // double x = rand() % (coor_up - coor_low) + coor_low;
+    // double y = rand() % (coor_up - coor_low) + coor_low;
+    memory.push_back(8);
+    double x = i * 10;
+    double y = i * 10;
     double swapping_probaility = swapping_success_prob();
     swapping_prob.push_back(swapping_probaility);
     point.push_back({x, y});
@@ -60,7 +61,7 @@ vector<P> dp(int l, int r) {
   else if (memo.find(l) != memo.end() && memo[l].find(r) != memo[l].end())
     return memo[l][r];
 
-  set<P> res_s;
+  priority_queue<P, vector<P>, compareFidelity> res_pq;
 
   // 分段
   for (int m = l + 1; m < r; m++) {
@@ -85,7 +86,8 @@ vector<P> dp(int l, int r) {
         vector<int> memory2 = d.memory;
 
         double fid = swapping_fidelity(f1, f2);
-        if (fid < threshold) // 若swapping後小於threshold，則後續怎麼做也都補不到threshold
+        if (fid <
+            threshold) // 若swapping後小於threshold，則後續怎麼做也都補不到threshold
           continue;
         if ((memory1.back() + memory2.front()) > memory[m])
           continue;
@@ -100,10 +102,8 @@ vector<P> dp(int l, int r) {
           temp_path.push_back(d.path[k]);
           temp_memory.push_back(d.memory[k]);
         }
-        P temp(fid,temp_path,temp_memory,success_prob);
-        if (res_s.find(temp) == res_s.end())
-          res_s.insert(temp);
-        // res.push_back(P(fid, temp_path, temp_memory, success_prob));
+        P temp(fid, temp_path, temp_memory, success_prob);
+        res_pq.push(temp);
       }
     }
   }
@@ -117,23 +117,17 @@ vector<P> dp(int l, int r) {
       continue;
 
     for (int j = m; j > 1; j /= 2) {
-      success_prob *= pow(purify_success_prob(jump_fidelity,jump_fidelity), j / 2);
+      success_prob *=
+          pow(purify_success_prob(jump_fidelity, jump_fidelity), j / 2);
       jump_fidelity = purify_fidelity(jump_fidelity, jump_fidelity);
     }
     if (jump_fidelity < threshold)
       continue;
-    // res.push_back(P(jump_fidelity, {l, r}, {m, m}, success_prob));
-    vector<int> temp_path = {l,r}, temp_memory = {m,m};
-    P temp(jump_fidelity,temp_path,temp_memory,success_prob);
-    if (res_s.find(temp) == res_s.end())
-      res_s.insert(temp);
+    vector<int> temp_path = {l, r}, temp_memory = {m, m};
+    P temp(jump_fidelity, temp_path, temp_memory, success_prob);
+    res_pq.push(temp);
   }
-  vector<P> res;
-  for(auto &c:res_s)
-    res.push_back(c);
-
-  // sort(res.begin(), res.end(), [](P &a, P &b) { return a.fidelity < b.fidelity; });
-
+  vector<P> res = pq_to_vector(res_pq);
   mx_group_size = max(mx_group_size, (int)res.size());
   return memo[l][r] = res;
 }
@@ -142,20 +136,19 @@ void print(vector<P> &ans) {
   for (int i = 0; i < node; i++) {
     cout << memory[i] << " ";
   }
-  cout<<"滿足fidelity限制的有"<<ans.size()<<"組"<<endl;
+  cout << "滿足fidelity限制的有" << ans.size() << "組" << endl;
   cout << endl;
-  cout << "fidelity前10大的: "<<endl;
-  for (int i = ans.size()-1; i >= max(0,(int)ans.size()-10); i--)
-    cout<<ans[i];
+  cout << "fidelity前10大的: " << endl;
+  for (int i = ans.size() - 1; i >= max(0, (int)ans.size() - 10); i--)
+    cout << ans[i];
 
-  cout<<endl;
-  sort(ans.begin(),ans.end(),[](const P&a, const P&b){
-    return a.success_prob > b.success_prob;
-  });
+  cout << endl;
+  sort(ans.begin(), ans.end(),
+       [](const P &a, const P &b) { return a.success_prob > b.success_prob; });
 
-  cout << "success prob前10大的: "<<endl;
-  for(int i=0; i<min((int)ans.size(),10); i++)
-    cout<<ans[i];
+  cout << "success prob前10大的: " << endl;
+  for (int i = 0; i < min((int)ans.size(), 10); i++)
+    cout << ans[i];
 }
 
 int main() {
