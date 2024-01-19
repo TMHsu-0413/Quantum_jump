@@ -59,9 +59,9 @@ double purify_fidelity(double fid1, double fid2) {
           (5 * (1 - fid1) * (1 - fid2) / 9));
 }
 
-double dis(array<double, 2> &a, array<double, 2> &b) {
-  return sqrt(powf(a[0] - b[0], 2) + powf(a[1] - b[1], 2));
-}
+//double dis(array<double, 2> &a, array<double, 2> &b) {
+//  return sqrt(powf(a[0] - b[0], 2) + powf(a[1] - b[1], 2));
+//}
 
 double at_least_to_meet_threshold(double fid, double threshold) {
   // fid*b + (1-fid)/3 * (1-b) >= threshold
@@ -79,7 +79,7 @@ double purify_success_prob(double fid1, double fid2) {
           (5 * (1 - fid1) * (1 - fid2) / 9));
 }
 
-double swapping_success_prob() { return (1 - 0.8) * rand() / RAND_MAX + 0.8; }
+double swapping_success_prob() { return 0.85;return (1 - 0.8) * rand() / RAND_MAX + 0.8; }
 
 vector<P> pq_to_vector(priority_queue<P, vector<P>, compareFidelity> &pq) {
   vector<P> res;

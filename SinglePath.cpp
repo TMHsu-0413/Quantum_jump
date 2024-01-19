@@ -6,7 +6,7 @@ using namespace std;
 vector<int> path;               // path走法，假設是[0,1,2,....node]
 vector<int> memory;             // 單點的memory
 vector<double> swapping_prob;   // 每個點做swapping的機率
-vector<array<double, 2>> point; // 點的座標，用來計算距離
+vector<double> dis;             // 距離直接隨機給，用presum來取
 
 unordered_map<int, unordered_map<int, vector<P>>> memo;
 int mx_group_size = 0;
@@ -33,23 +33,20 @@ void init_path(int node) {
   path.clear();
   memory.clear();
   memo.clear();
-  point.clear();
   swapping_prob.clear();
   // purify_memo.clear();
   mx_group_size = 0;
-
+  dis.push_back(0);
   for (int i = 0; i < node; i++) {
     path.push_back(i);
-    // int mem = rand() % (memory_up - memory_low + 1) + memory_low;
-    // memory.push_back(mem);
-    // double x = rand() % (coor_up - coor_low) + coor_low;
-    // double y = rand() % (coor_up - coor_low) + coor_low;
-    memory.push_back(8);
-    double x = i * 10;
-    double y = i * 10;
+    int mem = rand() % (memory_up - memory_low + 1) + memory_low;
+    memory.push_back(mem);
+    //memory.push_back(8);
     double swapping_probaility = swapping_success_prob();
     swapping_prob.push_back(swapping_probaility);
-    point.push_back({x, y});
+    double distance = (dist_up - dist_low) * rand() / RAND_MAX + dist_low;
+    //double distance = 1.414;
+    dis.push_back(dis.back() + distance);
   }
 }
 
@@ -109,7 +106,7 @@ vector<P> dp(int l, int r) {
 
   // 跳關 symmetric
   for (int m = 1; m <= min(memory[l], memory[r]); m *= 2) {
-    double distance = dis(point[l], point[r]);
+    double distance = dis[r] - dis[l];
     double jump_fidelity = fidelity(distance, beta);
     double success_prob = pow(entangle_success_prob(distance), m);
     if (jump_fidelity < 0.5) // purify只會越來越差
