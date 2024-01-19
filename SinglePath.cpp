@@ -1,7 +1,6 @@
 #include "formula.cpp"
 #include "parameter.cpp"
 #include <bits/stdc++.h>
-#include <iomanip>
 using namespace std;
 
 vector<int> path;               // path走法，假設是[0,1,2,....node]
@@ -151,6 +150,32 @@ void print(vector<P> &ans) {
     cout << ans[i];
 }
 
+void write_to_txt(vector<P> &ans) {
+  ofstream ofs;
+  ofs.open("output.txt");
+  if (!ofs.is_open()) {
+    cout << "error to open output.txt" << endl;
+    return;
+  }
+  for (auto &c : ans) {
+    ofs << c.fidelity << " " << c.success_prob << " ";
+    for (int i = 0; i < c.path.size(); i++) {
+      if (i != (c.path.size() - 1))
+        ofs << c.path[i] << ",";
+      else
+        ofs << c.path[i];
+    }
+    ofs << " ";
+    for (int i = 0; i < c.memory.size(); i++) {
+      if (i != (c.memory.size() - 1))
+        ofs << c.memory[i] << ",";
+      else
+        ofs << c.memory[i];
+    }
+    ofs << endl;
+  }
+}
+
 int main() {
   srand(time(NULL));
   double time = 0;
@@ -163,6 +188,7 @@ int main() {
     clock_t end = clock();
 
     print(ans);
+    write_to_txt(ans);
 
     time += (double(end) - double(start));
     cout << "maximum group size : " << mx_group_size << endl;
