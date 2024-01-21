@@ -39,13 +39,13 @@ void init_path(int node) {
   dis.push_back(0);
   for (int i = 0; i < node; i++) {
     path.push_back(i);
-    int mem = rand() % (memory_up - memory_low + 1) + memory_low;
-    memory.push_back(mem);
-    //memory.push_back(8);
+    //int mem = rand() % (memory_up - memory_low + 1) + memory_low;
+    //memory.push_back(mem);
+    memory.push_back(8);
     double swapping_probaility = swapping_success_prob();
     swapping_prob.push_back(swapping_probaility);
-    double distance = (dist_up - dist_low) * rand() / RAND_MAX + dist_low;
-    //double distance = 1.414;
+    //double distance = (dist_up - dist_low) * rand() / RAND_MAX + dist_low;
+    double distance = 1.414;
     dis.push_back(dis.back() + distance);
   }
 }
@@ -177,7 +177,6 @@ int main() {
   srand(time(NULL));
   double time = 0;
   for (int i = 0; i < times; i++) {
-    cout << "第" << i + 1 << "次" << endl;
     init_path(node);
     int n = path.size() - 1;
     clock_t start = clock();
