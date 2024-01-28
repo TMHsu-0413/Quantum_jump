@@ -3,10 +3,10 @@
 #include <bits/stdc++.h>
 using namespace std;
 
-vector<int> path;               // path走法，假設是[0,1,2,....node]
-vector<int> memory;             // 單點的memory
-vector<double> swapping_prob;   // 每個點做swapping的機率
-vector<double> dis;             // 距離直接隨機給，用presum來取
+vector<int> path;             // path走法，假設是[0,1,2,....node]
+vector<int> memory;           // 單點的memory
+vector<double> swapping_prob; // 每個點做swapping的機率
+vector<double> dis;           // 距離直接隨機給，用presum來取
 
 unordered_map<int, unordered_map<int, vector<P>>> memo;
 int mx_group_size = 0;
@@ -34,7 +34,6 @@ void init_path(int node) {
   memory.clear();
   memo.clear();
   swapping_prob.clear();
-  // purify_memo.clear();
   mx_group_size = 0;
   dis.push_back(0);
   for (int i = 0; i < node; i++) {
@@ -42,10 +41,12 @@ void init_path(int node) {
     //int mem = rand() % (memory_up - memory_low + 1) + memory_low;
     //memory.push_back(mem);
     memory.push_back(8);
+    
     double swapping_probaility = swapping_success_prob();
     swapping_prob.push_back(swapping_probaility);
+
     //double distance = (dist_up - dist_low) * rand() / RAND_MAX + dist_low;
-    double distance = 1.414;
+    double distance = 20;
     dis.push_back(dis.back() + distance);
   }
 }
@@ -57,7 +58,9 @@ vector<P> dp(int l, int r) {
   else if (memo.find(l) != memo.end() && memo[l].find(r) != memo[l].end())
     return memo[l][r];
 
-  priority_queue<P, vector<P>, compareFidelity> res_pq;
+  // 用來判斷同一個path的點有沒有被dominate
+  map<Path,vector<array<double,2>>> mp;
+  vector<P> res;
 
   // 分段
   for (int m = l + 1; m < r; m++) {
@@ -75,7 +78,8 @@ vector<P> dp(int l, int r) {
       vector<int> memory1 = c.memory;
 
       int idx = lower_bound(right, at_least_to_meet_threshold(f1, threshold));
-      for (int j = idx; j < right.size(); j++) {
+      //for (int j=idx; j<right.size(); j++){
+      for (int j=right.size()-1; j>=idx; j--) {
         P d = right[j];
         double f2 = d.fidelity;
         double s2 = d.success_prob;
@@ -98,8 +102,21 @@ vector<P> dp(int l, int r) {
           temp_path.push_back(d.path[k]);
           temp_memory.push_back(d.memory[k]);
         }
-        P temp(fid, temp_path, temp_memory, success_prob);
-        res_pq.push(temp);
+        Path key(0,temp_path);
+        array<double,2> value = {fid,success_prob};
+
+        bool add = true;
+        for(int mpIdx=0; mpIdx<mp[key].size(); mpIdx++){
+          if (mp[key][mpIdx][0] >= fid && mp[key][mpIdx][1] >= success_prob){
+            add = false;
+            break;
+          }
+        }
+
+        if (add){
+          mp[key].push_back(value);
+          res.push_back(P(fid,temp_path,temp_memory,success_prob));
+        }
       }
     }
   }
@@ -107,24 +124,29 @@ vector<P> dp(int l, int r) {
   // 跳關 symmetric
   for (int m = 1; m <= min(memory[l], memory[r]); m *= 2) {
     double distance = dis[r] - dis[l];
-    double jump_fidelity = fidelity(distance, beta);
+    double fidelity = entangle_fidelity(distance, beta);
     double success_prob = pow(entangle_success_prob(distance), m);
-    if (jump_fidelity < 0.5) // purify只會越來越差
+    if (fidelity < 0.5) // purify只會越來越差
       continue;
 
     for (int j = m; j > 1; j /= 2) {
       success_prob *=
-          pow(purify_success_prob(jump_fidelity, jump_fidelity), j / 2);
-      jump_fidelity = purify_fidelity(jump_fidelity, jump_fidelity);
+          pow(purify_success_prob(fidelity, fidelity), j / 2);
+      fidelity = purify_fidelity(fidelity, fidelity);
     }
-    if (jump_fidelity < threshold)
+    if (fidelity < threshold)
       continue;
     vector<int> temp_path = {l, r}, temp_memory = {m, m};
-    P temp(jump_fidelity, temp_path, temp_memory, success_prob);
-    res_pq.push(temp);
+
+    Path key(0,temp_path);
+    array<double,2> value = {fidelity,success_prob};
+    mp[key].push_back(value);
+    res.push_back(P(fidelity,temp_path,temp_memory,success_prob));
   }
-  vector<P> res = pq_to_vector(res_pq);
-  mx_group_size = max(mx_group_size, (int)res.size());
+  sort(res.begin(),res.end(),[](const P &a,const P &b){
+    return a.fidelity < b.fidelity;
+  });
+  mx_group_size = max(mx_group_size,(int)res.size());
   return memo[l][r] = res;
 }
 

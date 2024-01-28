@@ -3,21 +3,49 @@
 #include <random>
 using namespace std;
 
+class Path {
+public:
+  int idx;
+  vector<int> path;
+  Path(int i,vector<int> p):idx(i),path(p){
+    ;
+  }
+  bool operator<(const Path &p) const {
+    return idx < p.idx;
+  }
+};
 class P {
 public:
   double fidelity;
   vector<int> path;
   vector<int> memory;
   double success_prob;
-  P(double f, vector<int> p, vector<int> m) : fidelity(f), path(p), memory(m) {
-    ;
-  }
   P(double f, vector<int> p, vector<int> m, double s)
       : fidelity(f), path(p), memory(m), success_prob(s) {
     ;
   }
 
-  friend ostream &operator<<(ostream &cout, const P &p) {
+  bool operator<(const P &p) const {
+    if (success_prob != p.success_prob)
+      return success_prob < p.success_prob;
+    if (path != p.path)
+      return path < p.path;
+
+    if (memory != p.memory)
+      return memory < p.memory;
+    
+    if (fidelity != p.fidelity)
+      return fidelity < p.fidelity;
+
+    return false;
+  }
+
+  bool operator==(const P &p) const {
+    return success_prob == p.success_prob && path == p.path &&
+           memory == p.memory;
+  }
+
+  friend ostream &operator<<(ostream &cout, const P p) {
     cout << fixed << setprecision(6) << "fidelity: " << p.fidelity
          << "\tprob: " << p.success_prob;
     cout << "\t path = {";
@@ -40,12 +68,7 @@ public:
   }
 };
 
-class compareFidelity {
-public:
-  bool operator()(P &a, P &b) { return a.fidelity > b.fidelity; }
-};
-
-double fidelity(double dis, double beta) {
+double entangle_fidelity(double dis, double beta) {
   return 0.25 + 0.75 * exp(-beta * dis);
 }
 
@@ -59,9 +82,9 @@ double purify_fidelity(double fid1, double fid2) {
           (5 * (1 - fid1) * (1 - fid2) / 9));
 }
 
-//double dis(array<double, 2> &a, array<double, 2> &b) {
-//  return sqrt(powf(a[0] - b[0], 2) + powf(a[1] - b[1], 2));
-//}
+// double dis(array<double, 2> &a, array<double, 2> &b) {
+//   return sqrt(powf(a[0] - b[0], 2) + powf(a[1] - b[1], 2));
+// }
 
 double at_least_to_meet_threshold(double fid, double threshold) {
   // fid*b + (1-fid)/3 * (1-b) >= threshold
@@ -79,14 +102,16 @@ double purify_success_prob(double fid1, double fid2) {
           (5 * (1 - fid1) * (1 - fid2) / 9));
 }
 
-double swapping_success_prob() { return 0.85;return (1 - 0.8) * rand() / RAND_MAX + 0.8; }
-
-vector<P> pq_to_vector(priority_queue<P, vector<P>, compareFidelity> &pq) {
-  vector<P> res;
-  while (!pq.empty()) {
-    P c = pq.top();
-    pq.pop();
-    res.push_back(c);
-  }
-  return res;
+double swapping_success_prob() {
+  return 0.85;
+  return (1 - 0.8) * rand() / RAND_MAX + 0.8;
 }
+
+//vector<P> map_to_vector(map<P, double> &mp) {
+//  vector<P> res;
+//  for (auto &[k, v] : mp)
+//    res.push_back(P(v, k.path, k.memory, k.success_prob));
+//  sort(res.begin(), res.end(),
+//       [](P &a, P &b) { return a.fidelity < b.fidelity; });
+//  return res;
+//}
