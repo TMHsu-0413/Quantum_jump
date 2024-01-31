@@ -6,6 +6,8 @@ import numpy as np
 import collections
 from mpl_toolkits.mplot3d import Axes3D
 
+marker = [".", "o", "+", "x", "1", "^", "h", "*", "s"]
+
 
 def graph_2d():
     with open("output.txt", "r") as f:
@@ -26,9 +28,9 @@ def graph_2d():
             break
         for i, (x, y) in enumerate(v):
             if i == 0:
-                ax.scatter(x, y, label=k, color=cmap.colors[j])
+                ax.scatter(x, y, label=k, color=cmap.colors[j], marker=marker[j])
             else:
-                ax.scatter(x, y, color=cmap.colors[j])
+                ax.scatter(x, y, color=cmap.colors[j], marker=marker[j])
         j += 1
     ax.legend(loc="upper right")
     # plt.savefig('2d_graph.png')

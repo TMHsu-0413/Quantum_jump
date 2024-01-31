@@ -3,17 +3,23 @@
 #include <random>
 using namespace std;
 
-class Path {
+class Path_and_Memory {
 public:
   int idx;
-  vector<int> path;
-  Path(int i,vector<int> p):idx(i),path(p){
+  vector<int> path, memory;
+  Path_and_Memory(int i, vector<int> p, vector<int> m)
+      : idx(i), path(p), memory(m) {
     ;
   }
-  bool operator<(const Path &p) const {
-    return idx < p.idx;
+  bool operator<(const Path_and_Memory &b) const {
+    if (path != b.path)
+      return path < b.path;
+    else if (memory != b.memory)
+      return memory < b.memory;
+    return idx < b.idx;
   }
 };
+
 class P {
 public:
   double fidelity;
@@ -33,7 +39,7 @@ public:
 
     if (memory != p.memory)
       return memory < p.memory;
-    
+
     if (fidelity != p.fidelity)
       return fidelity < p.fidelity;
 
@@ -104,14 +110,14 @@ double purify_success_prob(double fid1, double fid2) {
 
 double swapping_success_prob() {
   return 0.85;
-  return (1 - 0.8) * rand() / RAND_MAX + 0.8;
+  // return (1 - 0.8) * rand() / RAND_MAX + 0.8;
 }
 
-//vector<P> map_to_vector(map<P, double> &mp) {
-//  vector<P> res;
-//  for (auto &[k, v] : mp)
-//    res.push_back(P(v, k.path, k.memory, k.success_prob));
-//  sort(res.begin(), res.end(),
-//       [](P &a, P &b) { return a.fidelity < b.fidelity; });
-//  return res;
-//}
+// vector<P> map_to_vector(map<P, double> &mp) {
+//   vector<P> res;
+//   for (auto &[k, v] : mp)
+//     res.push_back(P(v, k.path, k.memory, k.success_prob));
+//   sort(res.begin(), res.end(),
+//        [](P &a, P &b) { return a.fidelity < b.fidelity; });
+//   return res;
+// }
