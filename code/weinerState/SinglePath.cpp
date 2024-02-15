@@ -1,5 +1,5 @@
+#include "../parameter.cpp"
 #include "formula.cpp"
-#include "parameter.cpp"
 #include <bits/stdc++.h>
 using namespace std;
 
@@ -20,15 +20,15 @@ void init_path(int node) {
   dis.push_back(0);
   for (int i = 0; i < node; i++) {
     path.push_back(i);
-    // int mem = rand() % (memory_up - memory_low + 1) + memory_low;
-    // memory.push_back(mem);
-    memory.push_back(8);
+    int mem = rand() % (memory_up - memory_low + 1) + memory_low;
+    memory.push_back(mem);
+    // memory.push_back(8);
 
     double swapping_probaility = swapping_success_prob();
     swapping_prob.push_back(swapping_probaility);
 
-    // double distance = (dist_up - dist_low) * rand() / RAND_MAX + dist_low;
-    double distance = 10;
+    double distance = (dist_up - dist_low) * rand() / RAND_MAX + dist_low;
+    // double distance = 1.414;
     dis.push_back(dis.back() + distance);
   }
 }
@@ -118,6 +118,7 @@ vector<P> dp(int l, int r) {
       }
     }
   }
+
   // 分段
   for (int m = l + 1; m < r; m++) {
     // 不能在這個點swapping

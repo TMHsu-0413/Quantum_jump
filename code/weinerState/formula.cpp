@@ -109,8 +109,8 @@ double purify_success_prob(double fid1, double fid2) {
 }
 
 double swapping_success_prob() {
-  return 0.85;
-  // return (1 - 0.8) * rand() / RAND_MAX + 0.8;
+  // return 0.85;
+  return (1 - 0.8) * rand() / RAND_MAX + 0.8;
 }
 
 // vector<P> map_to_vector(map<P, double> &mp) {
