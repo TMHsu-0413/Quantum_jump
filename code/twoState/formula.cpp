@@ -26,7 +26,7 @@ public:
 };
 
 double entangle_fidelity(double dis, double beta) {
-  return 0.5 + exp(-beta * dis);
+  return 0.5 + 0.5 * exp(-beta * dis);
 }
 
 double swapping_fidelity(double fid1, double fid2) { return fid1 * fid2; }
