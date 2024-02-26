@@ -9,11 +9,7 @@ public:
   double fidelity;
   double prob;
   Node *node;
-  int memory;
-  pathInfo(double f, double p, Node *n, int m)
-      : fidelity(f), prob(p), node(n), memory(m) {
-    ;
-  }
+  pathInfo(double f, double p, Node *n) : fidelity(f), prob(p), node(n) { ; }
 
   const bool operator<(const pathInfo &b) const { return prob < b.prob; }
 };
@@ -21,8 +17,9 @@ public:
 class Node {
 public:
   int ID;
+  int memory;
   vector<pathInfo> neighbors;
-  Node(int id) : ID(id) { ; }
+  Node(int id, int mem) : ID(id), memory(mem) { ; }
 };
 
 double entangle_fidelity(double dis, double beta) {
