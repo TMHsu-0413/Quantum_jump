@@ -10,16 +10,15 @@ vector<double> dis;           // 距離直接隨機給，用presum來取
 unordered_map<int, unordered_map<int, unordered_map<int, Node *>>> nodeMap;
 int idx = -1;
 int virtual_src = -200;
-int virtual_dst = -201;
 
 void init_path(int node) {
   memory.clear();
   swapping_prob.clear();
   dis.push_back(0);
   for (int i = 0; i < node; i++) {
-    // int mem = rand() % (memory_up - memory_low + 1) + memory_low;
-    // memory.push_back(mem);
-    memory.push_back(5);
+    int mem = rand() % (memory_up - memory_low + 1) + memory_low;
+    memory.push_back(mem);
+    // memory.push_back(5);
 
     double swapping_probaility = swapping_success_prob();
     swapping_prob.push_back(swapping_probaility);
@@ -130,6 +129,7 @@ void buildGraph(int node, int src, int dst) {
     }
   }
 }
+
 void dijkstra(int src, int dst) {
   priority_queue<pathInfo> pq; // {prob,fid,cur,used_memory}
   unordered_map<Node *, bool> used;
