@@ -16,10 +16,13 @@ public:
 
 class Node {
 public:
-  int ID;
+  // from = 1 , to = 2，代表從1走到2的virtual node
+  // from = 3 , to = -1，代表3的實體node
+  int from;
+  int to;
   int memory;
   vector<pathInfo> neighbors;
-  Node(int id, int mem) : ID(id), memory(mem) { ; }
+  Node(int from, int to, int mem) : from(from), to(to), memory(mem) { ; }
 };
 
 double entangle_fidelity(double dis, double beta) {
