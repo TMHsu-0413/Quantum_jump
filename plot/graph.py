@@ -36,6 +36,24 @@ def graph_2d():
     # plt.savefig('2d_graph.png')
 
 
+def graph_2d_1(name):
+    with open(name, "r") as f:
+        point = []
+        for line in f:
+            data = line.split(" ")
+            point.append([float(data[0]), float(data[1])])
+    fig, ax = plt.subplots()
+    plt.xlabel("cost1")
+    plt.ylabel("cost2")
+    plt.xlim(0, 10)
+    plt.ylim(0, 10)
+    ax.set_title(str(name[:-4]))
+    for x, y in point:
+        ax.scatter(x, y)
+    ax.legend(loc="upper right")
+    # plt.savefig('2d_graph.png')
+
+
 def graph_3d():
     with open("output.txt", "r") as f:
         x, y = [], []
@@ -61,7 +79,8 @@ def graph_3d():
     # plt.savefig('3d_graph.png')
 
 
-graph_2d()
+graph_2d_1("allpoint.txt")
+graph_2d_1("RLBSPpoint.txt")
 # graph_3d()
 plt.show()
 plt.close()
