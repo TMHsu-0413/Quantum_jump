@@ -6,12 +6,14 @@ using namespace std;
 // 有向圖with cycle
 unordered_map<int, Node *> buildgraph(int d) {
   unordered_map<int, Node *> g;
-
   g.clear();
-  // random graph
   for (int i = 0; i <= d; i++) {
     g[i] = new Node(i);
   }
+
+  // random graph
+
+  /*
   for (int i = 1; i <= d; i++) {
     for (int j = 1; j <= d; j++) {
       if (i == j)
@@ -21,11 +23,13 @@ unordered_map<int, Node *> buildgraph(int d) {
 
       g[i]->neighbor.push_back(new path(cost1, cost2, g[j]));
       g[j]->parent.push_back(new path(cost1, cost2, g[i]));
+      // g[j]->neighbor.push_back(new path(cost1, cost2, g[i]));
+      // g[i]->parent.push_back(new path(cost1, cost2, g[j]));
     }
   }
+  */
 
   // 2015 dijkstra example graph
-  /*
   vector<array<int, 4>> edge = {
       {1, 2, 0, 2}, {1, 3, 4, 0}, {2, 3, 1, 5}, {3, 2, 1, 0},
       {2, 4, 3, 1}, {3, 4, 0, 2}}; //{i,j,cost1,cost2} 2015那篇的example
@@ -36,11 +40,10 @@ unordered_map<int, Node *> buildgraph(int d) {
                                    // 但把cost1與cost2交換
   for (auto &e : edge) {
     g[e[0]]->neighbor.push_back(new path(e[2], e[3], g[e[1]]));
-    //g[e[0]]->parent.push_back(new path(e[2], e[3], g[e[1]]));
-    //g[e[1]]->parent.push_back(new path(e[2], e[3], g[e[0]]));
-    g[e[1]]->neighbor.push_back(new path(e[2], e[3], g[e[0]]));
+    g[e[1]]->parent.push_back(new path(e[2], e[3], g[e[0]]));
+    // g[e[0]]->parent.push_back(new path(e[2], e[3], g[e[1]]));
+    // g[e[1]]->neighbor.push_back(new path(e[2], e[3], g[e[0]]));
   }
-  */
   return g;
 }
 vector<array<double, 2>> dfsAns, RLBSPAns;
@@ -83,21 +86,25 @@ bool dijkstra(unordered_map<int, Node *> &g, int s, int d,
     double c1 = get<0>(temp), c2 = get<1>(temp);
     int cur = get<2>(temp);
 
+    if (c1 > dist[cur][0] || c2 > dist[cur][1])
+      continue;
+
     if (cur == d) {
-      // cout << "cost1 : " << c1 << " cost2 : " << c2 << endl;
-      // printPath(g, parent, d, s);
       return true;
     }
 
-    if (c1 > dist[cur][0])
-      continue;
-
     for (auto &nxt : g[cur]->neighbor) {
       int nxtID = nxt->node->id;
-      if ((c1 + nxt->cost1) < dist[nxtID][0]) {
-        dist[nxtID] = {c1 + nxt->cost1, c2 + nxt->cost2};
-        parent[nxtID] = {0, cur};
-        pq.push({dist[nxtID][0], dist[nxtID][1], nxt->node->id});
+      if ((c1 + nxt->cost1) <= dist[nxtID][0]) {
+        if (c1 + nxt->cost1 < dist[nxtID][0]) {
+          dist[nxtID] = {c1 + nxt->cost1, c2 + nxt->cost2};
+          parent[nxtID] = {0, cur};
+          pq.push({dist[nxtID][0], dist[nxtID][1], nxt->node->id});
+        } else if (c2 + nxt->cost2 < dist[nxtID][1]) {
+          dist[nxtID] = {c1 + nxt->cost1, c2 + nxt->cost2};
+          parent[nxtID] = {0, cur};
+          pq.push({dist[nxtID][0], dist[nxtID][1], nxt->node->id});
+        }
       }
     }
   }
@@ -105,9 +112,8 @@ bool dijkstra(unordered_map<int, Node *> &g, int s, int d,
 }
 
 // 求Dijkstra找cost2的解
-array<double, 2> dijkstra_on_cost2(unordered_map<int, Node *> &g, int s, int d,
-                                   vector<array<double, 2>> &dist,
-                                   vector<array<int, 2>> &parent) {
+array<double, 2> dijkstra_on_cost2(unordered_map<int, Node *> &g, int s,
+                                   int d) {
 
   vector<array<double, 2>> dist2(d + 1, {DBL_MAX, DBL_MAX});
   dist2[s] = {0, 0};
@@ -185,6 +191,8 @@ void RLBSP(unordered_map<int, Node *> &g, vector<array<double, 2>> &dist,
     // lazy delete
     if (minDiff[i] != diffCost)
       continue;
+
+    // output part
     cout << endl;
     cout << "pop : " << slope << " " << diffCost << " " << i << endl;
     for (auto &d : dist) {
@@ -294,15 +302,17 @@ void write_to_txt(vector<array<double, 2>> &v, string name) {
 
 int main() {
   srand(time(NULL));
-  int source = 1, dest = 8, n = dest + 1;
+  int source = 1, dest = 4, n = dest + 1;
   auto g = buildgraph(dest);
   vector<array<double, 2>> dist(n, {DBL_MAX, DBL_MAX}); // {d1,d2}
   vector<array<int, 2>> parent(n, {0, -1});             // {Cpred,pred}
   bool havePath = dijkstra(g, source, dest, dist, parent);
-  array<double, 2> cost2_sp = dijkstra_on_cost2(g, source, dest, dist, parent);
+  array<double, 2> cost2_sp = dijkstra_on_cost2(g, source, dest);
   // 這張圖起點到終點沒連通
   if (!havePath)
     return 0;
+  cout << "Initial shortest path cost : " << dist[dest][0] << " "
+       << dist[dest][1] << endl;
   vector<bool> used(n, false);
   dfs(g, used, source, dest, 0, 0);
   RLBSP(g, dist, parent, source, dest);
