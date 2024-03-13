@@ -6,11 +6,12 @@ using namespace std;
 // 有向圖with cycle
 unordered_map<int, Node *> buildgraph(int d) {
   unordered_map<int, Node *> g;
+
   g.clear();
+  // random graph
   for (int i = 0; i <= d; i++) {
     g[i] = new Node(i);
   }
-
   for (int i = 1; i <= d; i++) {
     for (int j = 1; j <= d; j++) {
       if (i == j)
@@ -23,6 +24,7 @@ unordered_map<int, Node *> buildgraph(int d) {
     }
   }
 
+  // 2015 dijkstra example graph
   /*
   vector<array<int, 4>> edge = {
       {1, 2, 0, 2}, {1, 3, 4, 0}, {2, 3, 1, 5}, {3, 2, 1, 0},
@@ -34,9 +36,11 @@ unordered_map<int, Node *> buildgraph(int d) {
                                    // 但把cost1與cost2交換
   for (auto &e : edge) {
     g[e[0]]->neighbor.push_back(new path(e[2], e[3], g[e[1]]));
-    g[e[1]]->parent.push_back(new path(e[2], e[3], g[e[0]]));
+    //g[e[0]]->parent.push_back(new path(e[2], e[3], g[e[1]]));
+    //g[e[1]]->parent.push_back(new path(e[2], e[3], g[e[0]]));
+    g[e[1]]->neighbor.push_back(new path(e[2], e[3], g[e[0]]));
   }
-*/
+  */
   return g;
 }
 vector<array<double, 2>> dfsAns, RLBSPAns;
@@ -66,6 +70,7 @@ void printPath(unordered_map<int, Node *> &g, vector<array<int, 2>> &p, int cur,
   cout << cur << " ";
 }
 
+// 求Dijkstra找cost1的解
 bool dijkstra(unordered_map<int, Node *> &g, int s, int d,
               vector<array<double, 2>> &dist, vector<array<int, 2>> &parent) {
   dist[s] = {0, 0};
@@ -98,6 +103,42 @@ bool dijkstra(unordered_map<int, Node *> &g, int s, int d,
   }
   return false;
 }
+
+// 求Dijkstra找cost2的解
+array<double, 2> dijkstra_on_cost2(unordered_map<int, Node *> &g, int s, int d,
+                                   vector<array<double, 2>> &dist,
+                                   vector<array<int, 2>> &parent) {
+
+  vector<array<double, 2>> dist2(d + 1, {DBL_MAX, DBL_MAX});
+  dist2[s] = {0, 0};
+
+  priority_queue<t, vector<t>, greater<t>> pq;
+  pq.push({0, 0, s});
+  while (!pq.empty()) {
+    t temp = pq.top();
+    pq.pop();
+    double c2 = get<0>(temp), c1 = get<1>(temp);
+    int cur = get<2>(temp);
+
+    if (cur == d) {
+      return dist2[d];
+    }
+
+    if (c2 > dist2[cur][0])
+      continue;
+
+    for (auto &nxt : g[cur]->neighbor) {
+      int nxtID = nxt->node->id;
+      if ((c2 + nxt->cost2) < dist2[nxtID][0]) {
+        dist2[nxtID] = {c2 + nxt->cost2, c1 + nxt->cost1};
+        // parent[nxtID] = {0, cur};
+        pq.push({dist2[nxtID][0], dist2[nxtID][1], nxt->node->id});
+      }
+    }
+  }
+  return dist2[d];
+}
+
 void RLBSP(unordered_map<int, Node *> &g, vector<array<double, 2>> &dist,
            vector<array<int, 2>> &parent, int s, int d) {
   vector<double> theta(d + 1, DBL_MAX);
@@ -138,14 +179,32 @@ void RLBSP(unordered_map<int, Node *> &g, vector<array<double, 2>> &dist,
     Label temp = pq.top();
     double slope = temp.slope, diffCost = temp.diffCost;
     int i = temp.nodeID;
+
     pq.pop();
 
     // lazy delete
     if (minDiff[i] != diffCost)
       continue;
+    cout << endl;
+    cout << "pop : " << slope << " " << diffCost << " " << i << endl;
+    for (auto &d : dist) {
+      cout << "Dist: (" << d[0] << " " << d[1] << ") \t";
+    }
+    cout << endl;
+    for (auto &d : parent) {
+      cout << "Cpred, pred: (" << d[0] << "," << d[1] << ") \t";
+    }
+    cout << endl;
+    for (auto &d : theta) {
+      if (d == DBL_MAX)
+        cout << "theta: inf \t";
+      else
+        cout << "theta: " << d << "\t";
+    }
+    cout << endl;
 
     if (i == d) {
-      if (slope > lastratio) {
+      if (slope >= lastratio) {
         cout << "cost1 : " << dist[d][0] << " cost2 : " << dist[d][1] << endl;
         RLBSPAns.push_back({dist[d][0], dist[d][1]});
         printPath(g, parent, d, s);
@@ -188,7 +247,9 @@ void RLBSP(unordered_map<int, Node *> &g, vector<array<double, 2>> &dist,
 
     if (parent[i][0] != 0) {
       pq.push({minTheta, minCost2, i});
+      cout << "Push 13: [" << minTheta << " ," << minCost2 << " ," << i << endl;
       theta[i] = minTheta;
+      minDiff[i] = minCost2;
     }
 
     // 15行
@@ -205,6 +266,8 @@ void RLBSP(unordered_map<int, Node *> &g, vector<array<double, 2>> &dist,
         if ((curTheta < theta[j]) ||
             ((curTheta == theta[j]) && (diffCost2 < minDiff[j]))) {
           pq.push({curTheta, diffCost2, j});
+          cout << "Push 15: [" << curTheta << " ," << diffCost2 << " ," << j
+               << "] " << endl;
           minDiff[j] = diffCost2;
           theta[j] = curTheta;
           parent[j][0] = i;
@@ -217,6 +280,7 @@ void RLBSP(unordered_map<int, Node *> &g, vector<array<double, 2>> &dist,
   printPath(g, parent, d, s);
 }
 
+// 寫入txt，印圖用
 void write_to_txt(vector<array<double, 2>> &v, string name) {
   ofstream ofs;
   ofs.open(name);
@@ -230,12 +294,12 @@ void write_to_txt(vector<array<double, 2>> &v, string name) {
 
 int main() {
   srand(time(NULL));
-  int source = 1, dest = 7, n = dest + 1;
+  int source = 1, dest = 8, n = dest + 1;
   auto g = buildgraph(dest);
-
   vector<array<double, 2>> dist(n, {DBL_MAX, DBL_MAX}); // {d1,d2}
   vector<array<int, 2>> parent(n, {0, -1});             // {Cpred,pred}
   bool havePath = dijkstra(g, source, dest, dist, parent);
+  array<double, 2> cost2_sp = dijkstra_on_cost2(g, source, dest, dist, parent);
   // 這張圖起點到終點沒連通
   if (!havePath)
     return 0;
@@ -244,4 +308,7 @@ int main() {
   RLBSP(g, dist, parent, source, dest);
   write_to_txt(dfsAns, "allpoint.txt");
   write_to_txt(RLBSPAns, "RLBSPpoint.txt");
+
+  cout << "\n\ncost2 shortest path cost : " << cost2_sp[1] << " " << cost2_sp[0]
+       << endl;
 }
