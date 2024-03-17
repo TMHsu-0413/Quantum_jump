@@ -3,6 +3,8 @@
 using t = tuple<double, double, int>;
 using namespace std;
 
+double threshold = 5;
+
 // 有向圖with cycle
 unordered_map<int, Node *> buildgraph(int d) {
   unordered_map<int, Node *> g;
@@ -13,7 +15,7 @@ unordered_map<int, Node *> buildgraph(int d) {
 
   // random graph
 
-  /*
+  
   for (int i = 1; i <= d; i++) {
     for (int j = 1; j <= d; j++) {
       if (i == j)
@@ -27,8 +29,9 @@ unordered_map<int, Node *> buildgraph(int d) {
       // g[i]->parent.push_back(new path(cost1, cost2, g[j]));
     }
   }
-  */
+  
 
+ /*
   // 2015 dijkstra example graph
   vector<array<int, 4>> edge = {
       {1, 2, 0, 2}, {1, 3, 4, 0}, {2, 3, 1, 5}, {3, 2, 1, 0},
@@ -44,6 +47,7 @@ unordered_map<int, Node *> buildgraph(int d) {
     // g[e[0]]->parent.push_back(new path(e[2], e[3], g[e[1]]));
     // g[e[1]]->neighbor.push_back(new path(e[2], e[3], g[e[0]]));
   }
+  */
   return g;
 }
 vector<array<double, 2>> dfsAns, RLBSPAns;
@@ -71,6 +75,10 @@ void printPath(unordered_map<int, Node *> &g, vector<array<int, 2>> &p, int cur,
   }
   printPath(g, p, p[cur][1], source);
   cout << cur << " ";
+}
+
+bool over_Threshold(double cost1){
+  return cost1 > threshold;
 }
 
 // 求Dijkstra找cost1的解
@@ -159,6 +167,9 @@ void RLBSP(unordered_map<int, Node *> &g, vector<array<double, 2>> &dist,
       double newCost1 = dist[j][0] + prev->cost1,
              newCost2 = dist[j][1] + prev->cost2;
 
+      if (over_Threshold(newCost1))
+        continue;
+      
       double diffCost1 = newCost1 - dist[i][0],
              diffCost2 = newCost2 - dist[i][1];
 
@@ -235,6 +246,9 @@ void RLBSP(unordered_map<int, Node *> &g, vector<array<double, 2>> &dist,
       double newCost1 = dist[j][0] + prev->cost1,
              newCost2 = dist[j][1] + prev->cost2;
 
+      if (over_Threshold(newCost1))
+        continue;
+
       double diffCost1 = newCost1 - dist[i][0],
              diffCost2 = newCost2 - dist[i][1];
 
@@ -265,6 +279,9 @@ void RLBSP(unordered_map<int, Node *> &g, vector<array<double, 2>> &dist,
       int j = nxt->node->id;
       double newCost1 = dist[i][0] + nxt->cost1,
              newCost2 = dist[i][1] + nxt->cost2;
+      
+      if (over_Threshold(newCost1))
+        continue;
 
       double diffCost1 = newCost1 - dist[j][0],
              diffCost2 = newCost2 - dist[j][1];
@@ -302,7 +319,7 @@ void write_to_txt(vector<array<double, 2>> &v, string name) {
 
 int main() {
   srand(time(NULL));
-  int source = 1, dest = 4, n = dest + 1;
+  int source = 1, dest = 8, n = dest + 1;
   auto g = buildgraph(dest);
   vector<array<double, 2>> dist(n, {DBL_MAX, DBL_MAX}); // {d1,d2}
   vector<array<int, 2>> parent(n, {0, -1});             // {Cpred,pred}

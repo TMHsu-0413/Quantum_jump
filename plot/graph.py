@@ -1,5 +1,6 @@
 # %%
 import matplotlib
+import os
 import matplotlib.pyplot as plt
 
 import numpy as np
@@ -54,6 +55,8 @@ def graph_2d_1(name, x=0.0, y=0.0):
     for x, y in point:
         ax.scatter(x, y)
     ax.legend(loc="upper right")
+    img_dir = os.path.dirname(__file__) + '/image/'
+    plt.savefig(img_dir + name[3:-4] + '.png')
     return mx_x, mx_y
     # plt.savefig('2d_graph.png')
 
@@ -83,8 +86,8 @@ def graph_3d():
     # plt.savefig('3d_graph.png')
 
 
-mx_x, mx_y = graph_2d_1("allpoint.txt", 0, 0)
-graph_2d_1("RLBSPpoint.txt", mx_x, mx_y)
+mx_x, mx_y = graph_2d_1("../allpoint.txt", 0, 0)
+graph_2d_1("../RLBSPpoint.txt", mx_x, mx_y)
 # graph_3d()
 plt.show()
 plt.close()
