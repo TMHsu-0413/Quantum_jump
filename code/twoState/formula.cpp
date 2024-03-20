@@ -3,26 +3,36 @@
 #include <random>
 using namespace std;
 class Node;
+class Label {
+public:
+  double slope, diffCost;
+  Node *node;
 
-class pathInfo {
+  Label(double s, double d, Node *n) : slope(s), diffCost(d), node(n) { ; }
+
+  const bool operator<(const Label &b) const {
+    if (slope == b.slope)
+      return diffCost > b.diffCost;
+    return slope > b.slope;
+  }
+};
+
+class path {
 public:
   double fidelity;
   double prob;
   Node *node;
-  pathInfo(double f, double p, Node *n) : fidelity(f), prob(p), node(n) { ; }
+  path(double f, double p, Node *n) : fidelity(f), prob(p), node(n) { ; }
 
-  const bool operator<(const pathInfo &b) const { return prob < b.prob; }
+  const bool operator<(const path &b) const { return prob < b.prob; }
 };
 
 class Node {
 public:
-  // from = 1 , to = 2，代表從1走到2的virtual node
-  // from = 3 , to = -1，代表3的實體node
-  int from;
-  int to;
+  int ID;
   int memory;
-  vector<pathInfo> neighbors;
-  Node(int from, int to, int mem) : from(from), to(to), memory(mem) { ; }
+  vector<path> neighbor, parent;
+  Node(int id, int m) : ID(id), memory(m) { ; }
 };
 
 double entangle_fidelity(double dis, double beta) {
@@ -46,3 +56,5 @@ double swapping_success_prob() {
   return 0.85;
   // return (1 - 0.8) * rand() / RAND_MAX + 0.8;
 }
+
+double ln(double x) { return log(x) / log(exp(1)); }
