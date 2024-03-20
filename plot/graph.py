@@ -49,8 +49,8 @@ def graph_2d_1(name, x=0.0, y=0.0):
     fig, ax = plt.subplots()
     plt.xlabel("cost1")
     plt.ylabel("cost2")
-    plt.xlim(0, mx_x + 3)
-    plt.ylim(0, mx_y + 3)
+    plt.xlim(0, mx_x + 1)
+    plt.ylim(0, mx_y + 1)
     ax.set_title(str(name[:-4]))
     for x, y in point:
         ax.scatter(x, y)
