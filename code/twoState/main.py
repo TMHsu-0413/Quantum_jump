@@ -153,7 +153,7 @@ print(num_of_node, file=f)
 for n in G.nodes():
     (p1, p2) = positions[n]
     print(
-        str(p1 * 200)
+        str(p1 * 300)
         + " "
         + str(p2 * 300)
         + " "

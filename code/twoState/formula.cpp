@@ -32,6 +32,7 @@ public:
   int ID;
   int memory;
   vector<path> neighbor, parent;
+  Node() { ; }
   Node(int id, int m) : ID(id), memory(m) { ; }
 };
 
