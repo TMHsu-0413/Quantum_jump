@@ -184,7 +184,7 @@ vector<vector<Node *>> dfsNode;
 void dfs(unordered_map<Node *, bool> &used, Node *cur, Node *d, double c1,
          double c2) {
   if (cur == d) {
-    dfsAns.push_back({c1, c2});
+    dfsAns.push_back({exp(-c1), exp(-c2)});
     return;
   }
   used[cur] = true;
@@ -386,7 +386,7 @@ void RLBSP(unordered_map<Node *, array<double, 2>> &dist,
     if (cur == d) {
       if (slope >= lastratio) {
         cout << "\nfidelity : " << exp(-d1) << " prob : " << exp(-d2) << endl;
-        RLBSPAns.push_back({d1, d2});
+        RLBSPAns.push_back({exp(-d1), exp(-d2)});
         printPath(Cpath);
         lastratio = slope;
       }
@@ -459,7 +459,7 @@ void RLBSP(unordered_map<Node *, array<double, 2>> &dist,
     }
   }
   cout << "\nfidelity : " << exp(-d1) << " prob : " << exp(-d2) << endl;
-  RLBSPAns.push_back({d1, d2});
+  RLBSPAns.push_back({exp(-d1), exp(-d2)});
   printPath(Cpath);
 }
 
@@ -499,6 +499,6 @@ int main() {
   write_to_txt(dfsAns, "allpoint.txt");
   write_to_txt(RLBSPAns, "RLBSPpoint.txt");
 
-  cout << "\n\ncost2 shortest path cost : " << cost2_sp[1] << " " << cost2_sp[0]
-       << endl;
+  // cout << "\n\ncost2 shortest path cost : " << cost2_sp[1] << " " <<
+  // cost2_sp[0] << endl;
 }
