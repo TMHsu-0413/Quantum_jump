@@ -1,6 +1,6 @@
+#include "RLBSP.h"
 #include "../../parameter.cpp"
 #include "../formula.h"
-#include "RLBSP.h"
 #include <bits/stdc++.h>
 using namespace std;
 using t = tuple<double, double, Node *>;
@@ -99,7 +99,7 @@ void buildGraph(string name) {
   in >> n;
   x.resize(n);
   y.resize(n);
-  dis.resize(n,0);
+  dis.resize(n, 0);
   memory.resize(n);
   swapping_prob.resize(n);
 
@@ -111,14 +111,15 @@ void buildGraph(string name) {
 
   in.close();
 
-  for(int i=1; i<n; i++)
-    dis[i] = dis[i-1] + distance(i-1,i);
+  for (int i = 1; i < n; i++)
+    dis[i] = dis[i - 1] + distance(i - 1, i);
 
   // from i to j
   for (int i = 0; i < n - 1; i++) {
     for (int j = i + 1; j < n; j++) {
       // 若 2 點距離超過 fiber distance，不建邊
-      cout << "i :" << i << " j : " << j << " dis : " << dis[j] - dis[i] << endl;
+      cout << "i :" << i << " j : " << j << " dis : " << dis[j] - dis[i]
+           << endl;
       if ((dis[j] - dis[i]) > fiber_distance)
         break;
 
@@ -481,8 +482,12 @@ void write_to_txt(vector<array<double, 2>> &v, string name) {
     ofs << e[0] << " " << e[1] << endl;
 }
 
-int main() {
-  buildGraph("graph_paper_example.txt");
+int main(int argc, char *argv[]) {
+  if (argc != 2) {
+    cout << "can only recieve 1 argument.";
+    return 1;
+  }
+  buildGraph(argv[1]);
   // buildExampleGraph();
   //   printGraph();
   unordered_map<Node *, array<double, 2>> dist; // Node : {d1,d2}
