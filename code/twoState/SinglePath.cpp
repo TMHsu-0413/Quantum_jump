@@ -8,6 +8,7 @@ int n;                        // 總節點個數
 vector<double> x, y;          // 點的x,y座標
 vector<double> memory;        // 單點的memory
 vector<double> swapping_prob; // 每個點做swapping的機率
+vector<double> dis;
 unordered_map<int, unordered_map<int, Node *>> nodeMap;
 
 Node *getNode(int ID, int mem) {
@@ -97,6 +98,7 @@ void buildGraph(string name) {
   in >> n;
   x.resize(n);
   y.resize(n);
+  dis.resize(n,0);
   memory.resize(n);
   swapping_prob.resize(n);
 
@@ -108,12 +110,15 @@ void buildGraph(string name) {
 
   in.close();
 
+  for(int i=1; i<n; i++)
+    dis[i] = dis[i-1] + distance(i-1,i);
+
   // from i to j
   for (int i = 0; i < n - 1; i++) {
     for (int j = i + 1; j < n; j++) {
       // 若 2 點距離超過 fiber distance，不建邊
-      cout << "i :" << i << " j : " << j << " dis : " << distance(i, j) << endl;
-      if (distance(i, j) > fiber_distance)
+      cout << "i :" << i << " j : " << j << " dis : " << dis[j] - dis[i] << endl;
+      if ((dis[j] - dis[i]) > fiber_distance)
         break;
 
       // iMemory, iM: memory node i already used
@@ -126,9 +131,9 @@ void buildGraph(string name) {
         Node *s = getNode(i, iM);
 
         // prob to create the edge
-        double entangleProb = entangle_success_prob(distance(i, j));
+        double entangleProb = entangle_success_prob((dis[j] - dis[i]));
         double curProb = entangleProb;
-        double entangleFidelity = entangle_fidelity(distance(i, j), beta);
+        double entangleFidelity = entangle_fidelity((dis[j] - dis[i]), beta);
         double curFidelity = entangleFidelity;
 
         for (int jMemory = 1; jMemory <= memory[j]; jMemory++) {
