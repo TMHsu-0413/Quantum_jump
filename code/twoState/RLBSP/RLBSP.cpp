@@ -1,5 +1,6 @@
-#include "../parameter.cpp"
-#include "formula.cpp"
+#include "../../parameter.cpp"
+#include "../formula.h"
+#include "RLBSP.h"
 #include <bits/stdc++.h>
 using namespace std;
 using t = tuple<double, double, Node *>;
