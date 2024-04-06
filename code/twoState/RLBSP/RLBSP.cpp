@@ -203,8 +203,8 @@ vector<array<double, 2>> dfsAns, RLBSPAns;
 void dfs(unordered_map<Node *, bool> &used, Node *cur, Node *d, double c1,
          double c2, vector<Node *> &v) {
   if (cur == d) {
-    // cout << "Fidelity : " << exp(-c1) << " " << "Probability : " << exp(-c2)
-    // << endl; printPath(v);
+    // cout << "Fidelity : " << exp(-c1) << " " << "Probability : " << exp(-c2) << endl;
+    // printPath(v);
     dfsAns.push_back({exp(-c1), exp(-c2)});
     return;
   }
@@ -344,12 +344,12 @@ void RLBSP(unordered_map<Node *, array<double, 2>> &dist,
         }
       }
       if (parent[cur][0] != nullptr) {
-        vector<Node *> temp;
-        getPath(parent, temp, parent[cur][0], s);
-        temp.push_back(cur);
-        pq.push({minTheta, minCost2, cur, temp});
-        // cout << "pq push [" << minTheta << ", " << minCost2 << ", " <<
-        // cur->ID << ", " << cur->memory << endl;
+        vector<Node *> tempPath;
+        getPath(parent, tempPath, parent[cur][0], s);
+        tempPath.push_back(cur);
+        pq.push({minTheta, minCost2, cur, tempPath});
+        //cout << "pq push [" << minTheta << ", " << minCost2 << ", " <<  cur->ID << ", " << cur->memory << endl;
+        //cout<<parent[cur][0]->ID<<" "<<parent[cur][0]->memory<<" "<<parent[cur][1]->ID<<" "<<parent[cur][1]->memory<<endl;
         theta[cur] = minTheta;
         minDiff[cur] = minCost2;
       }
@@ -361,8 +361,6 @@ void RLBSP(unordered_map<Node *, array<double, 2>> &dist,
     double slope = temp.slope, diffCost = temp.diffCost;
     Node *cur = temp.node;
 
-    // cout << "pq pop : " << slope << " " << diffCost << " " << cur->ID << " "
-    // << cur->memory << endl;
     vector<Node *> curPath = temp.path;
     pq.pop();
 
@@ -370,6 +368,7 @@ void RLBSP(unordered_map<Node *, array<double, 2>> &dist,
     if (minDiff[cur] != diffCost) {
       continue;
     }
+
 
     // output part
     // cout << slope << " " << diffCost << " " << cur->ID << " " << cur->memory
@@ -402,8 +401,11 @@ void RLBSP(unordered_map<Node *, array<double, 2>> &dist,
     theta[cur] = DBL_MAX;
     parent[cur][1] = parent[cur][0];
     parent[cur][0] = nullptr;
+    //cout << "pq pop : " << slope << " " << diffCost << " " << cur->ID << " " << cur->memory<<endl;
+    //cout<<parent[cur][1]->ID<<" "<<parent[cur][1]->memory<<endl;
     dist[cur][0] = dist[cur][0] - (slope * diffCost);
     dist[cur][1] = dist[cur][1] + diffCost;
+
 
     if (cur == d) {
       if (slope >= lastratio) {
@@ -414,7 +416,7 @@ void RLBSP(unordered_map<Node *, array<double, 2>> &dist,
       }
       Cpath.clear();
       Cpath = curPath;
-      // getPath(parent, Cpath, d, s);
+      //getPath(parent, Cpath, d, s);
       d1 = dist[d][0];
       d2 = dist[d][1];
     }
@@ -453,9 +455,7 @@ void RLBSP(unordered_map<Node *, array<double, 2>> &dist,
       getPath(parent, tempPath, parent[cur][0], s);
       tempPath.push_back(cur);
       pq.push({minTheta, minCost2, cur, tempPath});
-      // cout << "pq push [" << minTheta << ", " << minCost2 << ", " << cur->ID
-      // << ", " << cur->memory << endl; cout << "pq push parent: " << minTheta
-      // << " " << minCost2 << " " << cur->ID << " " << cur->memory << endl;
+       //cout << "pq push [" << minTheta << ", " << minCost2 << ", " << cur->ID << ", " << cur->memory << endl; cout << "pq push parent: " << minTheta << " " << minCost2 << " " << cur->ID << " " << cur->memory << endl;
       // cout << "Push 13: [" << minTheta
       // << " ," << minCost2 << " ," << cur
       // << endl;
@@ -482,8 +482,7 @@ void RLBSP(unordered_map<Node *, array<double, 2>> &dist,
           tempPath.push_back(nxtNode);
           pq.push({curTheta, diffCost2, nxtNode, tempPath});
           tempPath.pop_back();
-          // cout << "pq push [" << curTheta << ", " << diffCost2 << ", " <<
-          // nxtNode->ID << ", " << nxtNode->memory << endl;
+           //cout << "pq push [" << curTheta << ", " << diffCost2 << ", " <<  nxtNode->ID << ", " << nxtNode->memory << endl;
           minDiff[nxtNode] = diffCost2;
           theta[nxtNode] = curTheta;
           parent[nxtNode][0] = cur;

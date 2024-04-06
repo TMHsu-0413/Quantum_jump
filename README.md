@@ -1,5 +1,7 @@
 # 跳關的code
 
+- [題目及做法詳細說明，以2 state的部分為主](https://hackmd.io/w4bodB2OSc-Kn9Ftaamljw)
+
 ## code
 
 ### WeinerState
@@ -26,3 +28,31 @@
 ## plot
 
 - graph.py 透過SinglePath內的write_to_txt，用allpoint.txt與RLBSPpoing.txt繪製散點圖
+
+## 執行步驟
+
+- 進入資料夾
+
+```bash=
+cd quantum_jump
+```
+
+- 使用waxman產隨機圖，alpha設定0.1 - 0.3
+
+```bash=
+python3 code/twostate/main.py {name.txt} {number of node} {min memory} {max memory} {alpha} {min success prob} {max success prob}
+```
+
+- 執行RLBSP，找到最佳解
+
+```bash=
+# 若不暴力找出全部節點的話，要到RLBSP.cpp內把dfs function註解掉
+g++ code/twostate/RLBSP/RLBSP.cpp
+./a.out {name.txt}
+```
+
+- 將找到的點畫成散點圖
+
+```bash=
+python3 plot/graph.py
+```
