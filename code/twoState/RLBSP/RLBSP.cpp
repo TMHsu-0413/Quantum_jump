@@ -120,8 +120,7 @@ void buildGraph(string name) {
       // 若 2 點距離超過 fiber distance，不建邊
       cout << "i :" << i << " j : " << j << " dis : " << dis[j] - dis[i]
            << endl;
-      if ((dis[j] - dis[i]) > fiber_distance)
-        break;
+      // if ((dis[j] - dis[i]) > fiber_distance) break;
 
       // iMemory, iM: memory node i already used
       // jMemory: memory node j already used
@@ -186,24 +185,6 @@ void Initial(unordered_map<Node *, array<double, 2>> &dist,
   }
 }
 
-vector<array<double, 2>> dfsAns, RLBSPAns;
-vector<vector<Node *>> dfsNode;
-void dfs(unordered_map<Node *, bool> &used, Node *cur, Node *d, double c1,
-         double c2) {
-  if (cur == d) {
-    dfsAns.push_back({exp(-c1), exp(-c2)});
-    return;
-  }
-  used[cur] = true;
-  for (auto &nxt : cur->neighbor) {
-    Node *nxtNode = nxt.node;
-    if (used[nxtNode])
-      continue;
-    dfs(used, nxtNode, d, c1 + nxt.fidelity, c2 + nxt.prob);
-  }
-  used[cur] = false;
-}
-
 void printPath(vector<Node *> &Cpath) {
   vector<int> memoryUsed;
   cout << "path : ";
@@ -216,6 +197,27 @@ void printPath(vector<Node *> &Cpath) {
   for (auto &c : memoryUsed)
     cout << c << " ";
   cout << endl;
+}
+
+vector<array<double, 2>> dfsAns, RLBSPAns;
+void dfs(unordered_map<Node *, bool> &used, Node *cur, Node *d, double c1,
+         double c2, vector<Node *> &v) {
+  if (cur == d) {
+    // cout << "Fidelity : " << exp(-c1) << " " << "Probability : " << exp(-c2)
+    // << endl; printPath(v);
+    dfsAns.push_back({exp(-c1), exp(-c2)});
+    return;
+  }
+  for (auto &nxt : cur->neighbor) {
+    Node *nxtNode = nxt.node;
+    if (used[nxtNode])
+      continue;
+    used[nxtNode] = true;
+    v.push_back(nxtNode);
+    dfs(used, nxtNode, d, c1 + nxt.fidelity, c2 + nxt.prob, v);
+    used[nxtNode] = false;
+    v.pop_back();
+  }
 }
 
 bool over_Threshold(double cost1) { return cost1 > -ln(threshold); }
@@ -342,21 +344,32 @@ void RLBSP(unordered_map<Node *, array<double, 2>> &dist,
         }
       }
       if (parent[cur][0] != nullptr) {
-        pq.push({minTheta, minCost2, cur});
+        vector<Node *> temp;
+        getPath(parent, temp, parent[cur][0], s);
+        temp.push_back(cur);
+        pq.push({minTheta, minCost2, cur, temp});
+        // cout << "pq push [" << minTheta << ", " << minCost2 << ", " <<
+        // cur->ID << ", " << cur->memory << endl;
         theta[cur] = minTheta;
         minDiff[cur] = minCost2;
       }
     }
   }
   while (!pq.empty()) {
+    // Label內改成紀錄目前這條path經過的點的資訊，不然會因為threshold超過導致更新有問題
     Label temp = pq.top();
     double slope = temp.slope, diffCost = temp.diffCost;
     Node *cur = temp.node;
+
+    // cout << "pq pop : " << slope << " " << diffCost << " " << cur->ID << " "
+    // << cur->memory << endl;
+    vector<Node *> curPath = temp.path;
     pq.pop();
 
     // lazy delete
-    if (minDiff[cur] != diffCost)
+    if (minDiff[cur] != diffCost) {
       continue;
+    }
 
     // output part
     // cout << slope << " " << diffCost << " " << cur->ID << " " << cur->memory
@@ -382,6 +395,8 @@ void RLBSP(unordered_map<Node *, array<double, 2>> &dist,
     }
     cout << endl;
     */
+    // cout << slope << " " << diffCost << " " << cur->ID << " " << cur->memory
+    // << endl;
 
     minDiff[cur] = DBL_MAX;
     theta[cur] = DBL_MAX;
@@ -398,7 +413,8 @@ void RLBSP(unordered_map<Node *, array<double, 2>> &dist,
         lastratio = slope;
       }
       Cpath.clear();
-      getPath(parent, Cpath, d, s);
+      Cpath = curPath;
+      // getPath(parent, Cpath, d, s);
       d1 = dist[d][0];
       d2 = dist[d][1];
     }
@@ -432,21 +448,27 @@ void RLBSP(unordered_map<Node *, array<double, 2>> &dist,
         }
       }
     }
-
     if (parent[cur][0] != nullptr) {
-      pq.push({minTheta, minCost2, cur});
-      // cout << "Push 13: [" << minTheta << " ," << minCost2 << " ," << cur
+      vector<Node *> tempPath;
+      getPath(parent, tempPath, parent[cur][0], s);
+      tempPath.push_back(cur);
+      pq.push({minTheta, minCost2, cur, tempPath});
+      // cout << "pq push [" << minTheta << ", " << minCost2 << ", " << cur->ID
+      // << ", " << cur->memory << endl; cout << "pq push parent: " << minTheta
+      // << " " << minCost2 << " " << cur->ID << " " << cur->memory << endl;
+      // cout << "Push 13: [" << minTheta
+      // << " ," << minCost2 << " ," << cur
       // << endl;
       theta[cur] = minTheta;
       minDiff[cur] = minCost2;
     }
 
     // 15行
+    vector<Node *> tempPath = curPath;
     for (auto &nxt : cur->neighbor) {
       Node *nxtNode = nxt.node;
       double newCost1 = dist[cur][0] + nxt.fidelity,
              newCost2 = dist[cur][1] + nxt.prob;
-
       if (over_Threshold(newCost1))
         continue;
 
@@ -457,7 +479,11 @@ void RLBSP(unordered_map<Node *, array<double, 2>> &dist,
       if (diffCost2 < 0) {
         if ((curTheta < theta[nxtNode]) ||
             ((curTheta == theta[nxtNode]) && (diffCost2 < minDiff[nxtNode]))) {
-          pq.push({curTheta, diffCost2, nxtNode});
+          tempPath.push_back(nxtNode);
+          pq.push({curTheta, diffCost2, nxtNode, tempPath});
+          tempPath.pop_back();
+          // cout << "pq push [" << curTheta << ", " << diffCost2 << ", " <<
+          // nxtNode->ID << ", " << nxtNode->memory << endl;
           minDiff[nxtNode] = diffCost2;
           theta[nxtNode] = curTheta;
           parent[nxtNode][0] = cur;
@@ -489,7 +515,7 @@ int main(int argc, char *argv[]) {
   }
   buildGraph(argv[1]);
   // buildExampleGraph();
-  //   printGraph();
+  // printGraph();
   unordered_map<Node *, array<double, 2>> dist; // Node : {d1,d2}
   unordered_map<Node *, array<double, 2>> dist2;
   unordered_map<Node *, array<Node *, 2>> parent; // Node : {Cpred,pred}
@@ -497,7 +523,7 @@ int main(int argc, char *argv[]) {
   Node *src = getNode(0, 0), *dst = getNode(-1, -1);
   Initial(dist, dist2, parent, used);
   bool havePath = dijkstra(src, dst, dist, parent);
-  array<double, 2> cost2_sp = dijkstra_on_cost2(dist2, src, dst);
+  // array<double, 2> cost2_sp = dijkstra_on_cost2(dist2, src, dst);
   // 這張圖起點到終點沒連通
   if (!havePath) {
     cout << "can't arrive dst" << endl;
@@ -505,11 +531,12 @@ int main(int argc, char *argv[]) {
   }
   // cout << "Initial shortest path cost : " << dist[dst][0] << " " <<
   // dist[dst][1] << endl;
-  dfs(used, src, dst, 0, 0);
+  vector<Node *> path;
+  path.push_back(src);
+  dfs(used, src, dst, 0, 0, path);
   RLBSP(dist, parent, src, dst);
   write_to_txt(dfsAns, "allpoint.txt");
   write_to_txt(RLBSPAns, "RLBSPpoint.txt");
-
   // cout << "\n\ncost2 shortest path cost : " << cost2_sp[1] << " " <<
   // cost2_sp[0] << endl;
 }

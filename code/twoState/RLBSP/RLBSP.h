@@ -6,9 +6,14 @@ class Node;
 class Label {
 public:
   double slope, diffCost;
+  // Label內改成紀錄目前這條path經過的點的資訊，不然會因為threshold超過導致更新有問題
+  vector<Node *> path;
   Node *node;
 
-  Label(double s, double d, Node *n) : slope(s), diffCost(d), node(n) { ; }
+  Label(double s, double d, Node *n, vector<Node *> path)
+      : slope(s), diffCost(d), node(n), path(path) {
+    ;
+  }
 
   const bool operator<(const Label &b) const {
     if (slope == b.slope)
