@@ -167,7 +167,7 @@ void buildGraph(string name) {
     Node *virtual_dst = getNode(-1, -1);
 
     s->neighbor.push_back(path(-ln(1.0), -ln(1.0), virtual_dst));
-    virtual_dst->neighbor.push_back(path(-ln(1.0), -ln(1.0), s));
+    virtual_dst->parent.push_back(path(-ln(1.0), -ln(1.0), s));
   }
 }
 
@@ -236,7 +236,7 @@ bool dijkstra(Node *s, Node *d, unordered_map<Node *, array<double, 2>> &dist,
     double c1 = get<0>(temp), c2 = get<1>(temp);
     Node *cur = get<2>(temp);
 
-    if (c1 > dist[cur][0] || c2 > dist[cur][1])
+    if (c1 != dist[cur][0] && c2 != dist[cur][1])
       continue;
 
     for (auto &nxt : cur->neighbor) {
@@ -349,8 +349,8 @@ void RLBSP(unordered_map<Node *, array<double, 2>> &dist,
         getPath(parent, tempPath, parent[cur][0], s);
         tempPath.push_back(cur);
         pq.push({minTheta, minCost2, cur, tempPath});
-        // cout << "before pq push [" << minTheta << ", " << minCost2 << ", " <<
-        // cur->ID << ", " << cur->memory << endl; //
+        cout << "before pq push [" << minTheta << ", " << minCost2 << ", "
+             << cur->ID << ", " << cur->memory << endl; //
         // cout<<parent[cur][0]->ID<<"
         //  "<<parent[cur][0]->memory<<" "<<parent[cur][1]->ID<<"
         //  "<<parent[cur][1]->memory<<endl;
@@ -404,8 +404,8 @@ void RLBSP(unordered_map<Node *, array<double, 2>> &dist,
     theta[cur] = DBL_MAX;
     parent[cur][1] = parent[cur][0];
     parent[cur][0] = nullptr;
-    // cout << "pq pop : " << slope << " " << diffCost << " " << cur->ID << " "
-    // << cur->memory << endl; cout<<parent[cur][1]->ID<<"
+    cout << "pq pop : " << slope << " " << diffCost << " " << cur->ID << " "
+         << cur->memory << endl; // cout<<parent[cur][1]->ID<<"
     // "<<parent[cur][1]->memory<<endl;
     dist[cur][0] = dist[cur][0] - (slope * diffCost);
     dist[cur][1] = dist[cur][1] + diffCost;
@@ -522,7 +522,7 @@ int main(int argc, char *argv[]) {
   }
   buildGraph(argv[1]);
   // buildExampleGraph();
-  // printGraph();
+  printGraph();
   unordered_map<Node *, array<double, 2>> dist; // Node : {d1,d2}
   unordered_map<Node *, array<double, 2>> dist2;
   unordered_map<Node *, array<Node *, 2>> parent; // Node : {Cpred,pred}
