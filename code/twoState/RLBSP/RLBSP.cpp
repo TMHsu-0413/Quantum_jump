@@ -1,6 +1,7 @@
 #include "RLBSP.h"
 #include "../formula.h"
 #include <bits/stdc++.h>
+#include <chrono>
 #include <ctime>
 using namespace std;
 using t = tuple<double, double, Node *>;
@@ -13,8 +14,7 @@ public:
     this->beta = beta;
   }
   void run() {
-    clock_t start, end;
-    start = clock();
+    auto start = chrono::high_resolution_clock::now();
     buildGraph(filename);
     // buildExampleGraph();
     // printGraph();
@@ -34,8 +34,11 @@ public:
     // dfs(used, src, dst, 0, 0, path);
     // write_to_txt(dfsAns, "allpoint.txt");
     RLBSP(dist, parent, src, dst);
-    end = clock();
-    write_path_info((end - start) / CLOCKS_PER_SEC);
+    auto end = chrono::high_resolution_clock::now();
+    auto diff = end - start;
+    double time = chrono::duration<double>(diff).count();
+    cout << time << endl;
+    // write_path_info(time);
     // write_to_txt(RLBSPAns, "RLBSPpoint.txt");
     //  cout << "\n\ncost2 shortest path cost : " << cost2_sp[1] << " " <<
     //  cost2_sp[0] << endl;
