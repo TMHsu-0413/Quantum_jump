@@ -2,10 +2,7 @@ a.out
 a.exe
 2d_graph.png
 3d_graph.png
-output.txt
-allpoint.txt
-RLBSPpoint.txt
-graph.txt
+*.txt
 .DS_Store
 
 */a.out
