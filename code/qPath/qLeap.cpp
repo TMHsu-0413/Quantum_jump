@@ -109,14 +109,14 @@ pair<double, double> countFB(vector<int>path, vector<int>purTimes){
 }
 
 vector<int> extendDijkstra(int src, int dest) {
-  vector<double> maxFidelity(qNode.size(), 0.0);
+  vector<double>maxFidelityLog(qNode.size(), 0);
   vector<int> parent(qNode.size(), -1);
   priority_queue<pair<double, int>, vector<pair<double, int>>> pq;
 
   pq.push({1, src});
 
   while (!pq.empty()) {
-    auto [curF, curNode] = pq.top();
+    auto [curFLog, curNode] = pq.top();
     pq.pop();
 
     if (curNode == dest) {
@@ -125,11 +125,11 @@ vector<int> extendDijkstra(int src, int dest) {
 
     for (auto& edge : qNode[curNode].neighbor) {
       if (edge.canUse) {
-        double newFidelity = curF * edge.fidelity;
-        if (newFidelity > maxFidelity[edge.to]) {
-            maxFidelity[edge.to] = newFidelity;
-            parent[edge.to] = curNode;
-            pq.push({newFidelity, edge.to});
+        double newFidelityLog = curFLog + log(edge.fidelity);
+        if (newFidelityLog > maxFidelityLog[edge.to]) {
+          maxFidelityLog[edge.to] = newFidelityLog;
+          parent[edge.to] = curNode;
+          pq.push({newFidelityLog, edge.to});
         }
       }
     }
