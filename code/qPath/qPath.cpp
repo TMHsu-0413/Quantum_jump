@@ -212,6 +212,39 @@ vector<vector<int>> yenKSP(int src, int dest, int K, int H){
 
 	return A;
 }
+int purifyDicision(vector<int>& path, vector<int>& purTimes, priority_queue<pair<double, int>, vector<pair<double, int>>>& purDicision){
+  int edgeChoose = -1;
+  while(!purDicision.empty()){
+    edgeChoose = purDicision.top().second;
+    purDicision.pop();
+    int curNode = path[edgeChoose];
+    int nextNode = path[edgeChoose+1];
+    int edgeIdx = qNode[curNode].findEdge(curNode, nextNode);
+    vector<double>edgePurF = qNode[curNode].neighbor[edgeIdx].purFidelity;
+    
+    int leftNodePurTimes = 0, rightNodePurTimes = purTimes[edgeChoose+1];
+    int nextRightNodePurTimes = 0;
+
+    if(edgeChoose != 0){
+      leftNodePurTimes = purTimes[edgeChoose-1];
+    }
+    if(edgeChoose != path.size()-2){ // next node mem used should consider its right node
+      nextRightNodePurTimes = purTimes[edgeChoose+2];
+    }
+
+    int curNodeMemUsed = purTimes[edgeChoose] + leftNodePurTimes + rightNodePurTimes;
+    int nextNodeMemUsed = purTimes[edgeChoose+1] + nextRightNodePurTimes + rightNodePurTimes;
+    int lNode = path[edgeChoose], rNode = path[edgeChoose+1];
+    int edgeId = qNode[lNode].findEdge(lNode, rNode);
+  
+    assert(qNode[lNode].mem >= qNode[lNode].neighbor[edgeId].purFidelity.size()-1); //!!
+    if(curNodeMemUsed <= qNode[path[edgeChoose]].mem && nextNodeMemUsed <= qNode[path[edgeChoose+1]].mem && \
+      purTimes[edgeChoose] < edgePurF.size()-1){ 
+      return edgeChoose;
+    }
+  }   
+  return -1;      
+}
 void updEdgeCost(){
   // 如果 path Fidelity 沒過，就不斷找 purify 後 F 差異最大的進行 purify。
   for(int i=0; i<kSP.size(); i++){
@@ -232,54 +265,21 @@ void updEdgeCost(){
         vector<double>edgePurF = qNode[curNode].neighbor[edgeIdx].purFidelity;
         assert(edgePurF == qNode[curNode].neighbor[edgeIdx].purFidelity);
         if(purTimes[i] < edgePurF.size()-1){ 
-          purDicision.push({edgePurF[purTimes[i+1]] - edgePurF[purTimes[i]], i}); // push i, i is edge of path[i]->path[i+1]
-          // if(edgePurF[purTimes[i+1]] - edgePurF[purTimes[i]] > diff){
-          //   diff = edgePurF[purTimes[i+1]]-edgePurF[purTimes[i]];
-          //   purIdx = i;
-          // }
+          purDicision.push({edgePurF[purTimes[i+1]] - edgePurF[purTimes[i]], i}); 
+          // push i, i is edge of path[i]->path[i+1]
         }  
       }  
       // update fidelity, prb    
-      bool memOverFlow = 1;
-      int edgeChoose = -1; // node a -> node b
-      while(memOverFlow && !purDicision.empty()){
-        edgeChoose = purDicision.top().second;
-        purDicision.pop();
-        int curNode = path[edgeChoose];
-        int nextNode = path[edgeChoose+1];
-        int edgeIdx = qNode[curNode].findEdge(curNode, nextNode);
-        vector<double>edgePurF = qNode[curNode].neighbor[edgeIdx].purFidelity;
-        
-        int leftNodePurTimes = 0, rightNodePurTimes = purTimes[edgeChoose+1];
-        int nextRightNodePurTimes = 0;
-
-        if(edgeChoose != 0){
-          leftNodePurTimes = purTimes[edgeChoose-1];
-        }
-        if(edgeChoose != path.size()-2){ // next node mem used should consider its right node
-          nextRightNodePurTimes = purTimes[edgeChoose+2];
-        }
-
-        int curNodeMemUsed = purTimes[edgeChoose] + leftNodePurTimes + rightNodePurTimes;
-        int nextNodeMemUsed = purTimes[edgeChoose+1] + nextRightNodePurTimes + rightNodePurTimes;
-        int lNode = path[edgeChoose], rNode = path[edgeChoose+1];
-        int edgeId = qNode[lNode].findEdge(lNode, rNode);
-      
-        assert(qNode[lNode].mem >= qNode[lNode].neighbor[edgeId].purFidelity.size()-1); //!!
-        if(curNodeMemUsed <= qNode[path[edgeChoose]].mem && nextNodeMemUsed <= qNode[path[edgeChoose+1]].mem && \
-            purTimes[edgeChoose] < edgePurF.size()-1){ //? why -1 ?
-          purTimes[edgeChoose]++;
-          auto res = countFB(path, purTimes);
-          curF = res.first;
-          curP = res.second;
-          memOverFlow = 0;
-          break;
-        }
-      }   
-      if(memOverFlow && purDicision.empty()){
+      int edgeChoose = purifyDicision(path, purTimes, purDicision); // node a -> node b
+      if(edgeChoose == -1){
         pathFailed = 1;
         break;
-      }      
+      } else {
+        purTimes[edgeChoose]++;
+        auto res = countFB(path, purTimes);
+        curF = res.first;
+        curP = res.second;
+      }  
     } 
     if(curF >= threshold && !pathFailed){
       acPaths.push_back({curF, curP, kSP[i], purTimes});
@@ -336,7 +336,7 @@ int main(int argc, char* argv[]){
   init();
   routing(); 
   sort(acPaths.begin(), acPaths.end());
-  printALLACP();
+  printACP();
   END = clock();
   cout << "Time: " << (END-START)/CLOCKS_PER_SEC << "s\n";
 }
