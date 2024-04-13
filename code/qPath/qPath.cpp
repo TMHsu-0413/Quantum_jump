@@ -114,7 +114,6 @@ pair<double, double> countFB(vector<int>path, vector<int>purTimes){
       cout << '\n';
     }
     assert(purTimes[i] < qNode[curNode].neighbor[edgeIdx].purFidelity.size());
-
     cur.first *= qNode[curNode].neighbor[edgeIdx].purFidelity[purTimes[i]];
     cur.second *= qNode[curNode].neighbor[edgeIdx].purProb[purTimes[i]];
     if(i > 0){
@@ -237,7 +236,6 @@ void updEdgeCost(){
     auto tmp = countFB(path, purTimes);
     double curF = tmp.first, curP = tmp.second;
     priority_queue<pair<double, int>, vector<pair<double, int>>> purDicision;
-    // !!
     // 
     bool pathFailed = 0;
     while(curF < threshold && curF){
