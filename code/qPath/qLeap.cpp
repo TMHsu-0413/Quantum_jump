@@ -53,7 +53,8 @@ void buildDisTable(){
 void buildGraph(){
   for(int i=0; i<numQn; i++){
     for(int j=i+1; j<numQn; j++){
-
+      qNode[i].memUsed++; // use to swap
+      qNode[j].memUsed++; // use to swap
       double curProb = entangle_success_prob(disTable[{i, j}]);
       double enProb = curProb;
       double curFidelity = entangle_fidelity(disTable[{i, j}], BETA); // define
@@ -154,20 +155,23 @@ void updEdgeCost(){
   int len = path.size();
   vector<int>purTimes(len, 0);
   double minEdgeF = pow(threshold, 1/(len-1));
-  bool fl = 0;
+  bool memOverFlow = 0;
   for(int i=0; i<len-1; i++){
     int edgeIdx = qNode[path[i]].findEdge(path[i], path[i+1]); 
     double curEdgeF = qNode[path[i]].neighbor[edgeIdx].purFidelity[purTimes[i]];
     while(curEdgeF < minEdgeF){
       purTimes[i]++;
-      if(purTimes[i] >= qNode[path[i]].neighbor[edgeIdx].purFidelity.size()){
-        fl = 1;
+      qNode[path[i]].memUsed++;
+      qNode[path[i+1]].memUsed++;
+      if(purTimes[i] >= qNode[path[i]].neighbor[edgeIdx].purFidelity.size() || qNode[path[i]].memUsed > qNode[path[i]].mem || \
+          qNode[path[i+1]].memUsed > qNode[path[i+1]].mem){
+        memOverFlow = 1;
         break;
       }
       curEdgeF = qNode[path[i]].neighbor[edgeIdx].purFidelity[purTimes[i]];
     }
   }
-  if(fl){
+  if(memOverFlow){      
     return;
   }
   auto cur = countFB(path, purTimes);
@@ -181,7 +185,6 @@ void routing(){
 }
 void init(){
   buildDisTable();
-  // printDisTable();
   buildGraph(); 
   // 4 Q←Priority queue according to value of min_cost;
   // 5 Find shortest path on G with H(min) by using BFS;
@@ -210,7 +213,7 @@ int main(int argc, char* argv[]){
   routing(); 
   printACP();
   END = clock();  
-  cout << "Time: " << (END-START) << "ms" << '\n';
+  cout << "Time: " << (END-START)/CLOCKS_PER_SEC << "s" << '\n';
 }
 void printPath(vector<int> &path){
 	for (auto &p : path){
@@ -240,14 +243,6 @@ void printGraph(){
     cout << '\n';
   }
 }
-void printKSP(){
-  for(int i=0; i<kSP.size(); i++){
-    cout << "kSP " << i << ": ";
-    for(auto x:kSP[i]){
-      cout << x << " ";
-    }
-  }
-}
 void printACP(){
   for(auto x:acPaths){
     cout << "Path: ";
@@ -263,7 +258,6 @@ void printACP(){
     auto tmp = countFB(x.path, x.purTimes);
     cout << "Fidelity: " << tmp.first << '\n';
     cout << "Probability: " << tmp.second << '\n';
-    cout << '\n';
   }
 }
 void printPurifiTable(){
