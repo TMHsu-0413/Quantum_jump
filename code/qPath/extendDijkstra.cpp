@@ -20,15 +20,13 @@ void printPath(vector<int> &path){
 vector<int> extendDijkstra(int src, int dest) {
   vector<double> maxFidelity(qNode.size(), 0.0);
   vector<int> parent(qNode.size(), -1);
-  auto cmp = [&maxFidelity](int l, int r) { return maxFidelity[l] < maxFidelity[r]; };
-  priority_queue<int, vector<int>, decltype(cmp)> queue(cmp);
+  priority_queue<pair<double, int>, vector<pair<double, int>>> pq;
 
-  maxFidelity[src] = 1.0;
-  queue.push(src);
+  pq.push({0, src});
 
-  while (!queue.empty()) {
-    int curNode = queue.top();
-    queue.pop();
+  while (!pq.empty()) {
+    auto [curF, curNode] = pq.top();
+    pq.pop();
 
     if (curNode == dest) {
       break; 
@@ -36,12 +34,11 @@ vector<int> extendDijkstra(int src, int dest) {
 
     for (auto& edge : qNode[curNode].neighbor) {
       if (edge.canUse) {
-        double newFidelity = maxFidelity[curNode] * edge.fidelity;
-
+        double newFidelity = curF * edge.fidelity;
         if (newFidelity > maxFidelity[edge.to]) {
             maxFidelity[edge.to] = newFidelity;
             parent[edge.to] = curNode;
-            queue.push(edge.to);
+            pq.push({newFidelity, edge.to});
         }
       }
     }
