@@ -52,6 +52,8 @@ void buildDisTable(){
 void buildGraph(){
   for(int i=0; i<numQn; i++){
     for(int j=i+1; j<numQn; j++){
+      qNode[i].memUsed++; // use to swap
+      qNode[j].memUsed++; // use to swap
       double curProb = entangle_success_prob(disTable[{i, j}]);
       double enProb = curProb;
       double curFidelity = entangle_fidelity(disTable[{i, j}], BETA); // define
@@ -62,7 +64,6 @@ void buildGraph(){
       fi.push_back(curFidelity);
       prb.push_back(curProb);
       qNode[i].addNeighbor({edgeIdx, i, j, curProb, curFidelity, fi, prb}); // 只是紀錄可以連，實際上沒有 entangle，所以 memUsed = 0
-      // qNode[j].addNeighbor({edgeIdx2, j, i, curProb, curFidelity, fi, prb}); 答案會變差
       
       // 計算多次 purification 的 fidelity, probability
       double maxF = 0; 
@@ -85,11 +86,6 @@ void buildGraph(){
         qNode[i].neighbor[edgeIdx].purFidelity = tmpPurFi;
         qNode[i].neighbor[edgeIdx].purProb = tmpPurPrb;
       } 
-      // else {
-      //   vector<double>tmp0(min(qNode[i].mem, qNode[j].mem), 0);
-      //   qNode[i].neighbor[edgeIdx].purFidelity = tmp0;
-      //   qNode[i].neighbor[edgeIdx].purProb = tmp0;
-      // }
     }
   }
   // printPurifiTable();
@@ -98,17 +94,17 @@ void buildGraph(){
 pair<double, double> countFB(vector<int>path, vector<int>purTimes){
   pair<double, double>cur = {1, 1};
   bool memOverFlow = 0;
-  int lastNodeMemUsed = 0;
   for(int i=0; i<path.size()-1; i++){
     int curNode = path[i];
     int nextNode = path[i+1];
     int edgeIdx = qNode[curNode].findEdge(curNode, nextNode);
-    int curNodeMemUsed = purTimes[i];
-    if(curNodeMemUsed + lastNodeMemUsed > qNode[curNode].mem){
+
+    if(qNode[curNode].memUsed > qNode[curNode].mem || qNode[nextNode].memUsed > qNode[nextNode].mem){
       memOverFlow = 1;
       break;
     }
-    // ! 
+    
+    // debug 
     if(purTimes[i] >= qNode[curNode].neighbor[edgeIdx].purFidelity.size()){
       cout << "node " << curNode << " to " << nextNode << '\n';
       cout << purTimes[i] << " " << qNode[curNode].neighbor[edgeIdx].purFidelity.size() << '\n';
@@ -118,12 +114,12 @@ pair<double, double> countFB(vector<int>path, vector<int>purTimes){
       cout << '\n';
     }
     assert(purTimes[i] < qNode[curNode].neighbor[edgeIdx].purFidelity.size());
+
     cur.first *= qNode[curNode].neighbor[edgeIdx].purFidelity[purTimes[i]];
     cur.second *= qNode[curNode].neighbor[edgeIdx].purProb[purTimes[i]];
     if(i > 0){
       cur.second *= qNode[i].swappingProb;
     }
-    lastNodeMemUsed = curNodeMemUsed;
   }
   if(memOverFlow){
     return {0, 0};
@@ -212,6 +208,7 @@ vector<vector<int>> yenKSP(int src, int dest, int K, int H){
 
 	return A;
 }
+
 int purifyDicision(vector<int>& path, vector<int>& purTimes, priority_queue<pair<double, int>, vector<pair<double, int>>>& purDicision){
   int edgeChoose = -1;
   while(!purDicision.empty()){
@@ -221,24 +218,11 @@ int purifyDicision(vector<int>& path, vector<int>& purTimes, priority_queue<pair
     int nextNode = path[edgeChoose+1];
     int edgeIdx = qNode[curNode].findEdge(curNode, nextNode);
     vector<double>edgePurF = qNode[curNode].neighbor[edgeIdx].purFidelity;
-    
-    int leftNodePurTimes = 0, rightNodePurTimes = purTimes[edgeChoose+1];
-    int nextRightNodePurTimes = 0;
 
-    if(edgeChoose != 0){
-      leftNodePurTimes = purTimes[edgeChoose-1];
-    }
-    if(edgeChoose != path.size()-2){ // next node mem used should consider its right node
-      nextRightNodePurTimes = purTimes[edgeChoose+2];
-    }
+    int curNodeMemUsed = purTimes[edgeChoose] + qNode[curNode].memUsed;
+    int nextNodeMemUsed = purTimes[edgeChoose] + qNode[nextNode].memUsed;
 
-    int curNodeMemUsed = purTimes[edgeChoose] + leftNodePurTimes + rightNodePurTimes;
-    int nextNodeMemUsed = purTimes[edgeChoose+1] + nextRightNodePurTimes + rightNodePurTimes;
-    int lNode = path[edgeChoose], rNode = path[edgeChoose+1];
-    int edgeId = qNode[lNode].findEdge(lNode, rNode);
-  
-    assert(qNode[lNode].mem >= qNode[lNode].neighbor[edgeId].purFidelity.size()-1); //!!
-    if(curNodeMemUsed <= qNode[path[edgeChoose]].mem && nextNodeMemUsed <= qNode[path[edgeChoose+1]].mem && \
+    if(curNodeMemUsed <= qNode[curNode].mem && nextNodeMemUsed <= qNode[nextNode].mem && \
       purTimes[edgeChoose] < edgePurF.size()-1){ 
       return edgeChoose;
     }
@@ -265,8 +249,7 @@ void updEdgeCost(){
         vector<double>edgePurF = qNode[curNode].neighbor[edgeIdx].purFidelity;
         assert(edgePurF == qNode[curNode].neighbor[edgeIdx].purFidelity);
         if(purTimes[i] < edgePurF.size()-1){ 
-          purDicision.push({edgePurF[purTimes[i+1]] - edgePurF[purTimes[i]], i}); 
-          // push i, i is edge of path[i]->path[i+1]
+          purDicision.push({edgePurF[purTimes[i+1]] - edgePurF[purTimes[i]], i});  // push i, i is edge of path[i]->path[i+1]
         }  
       }  
       // update fidelity, prb    
@@ -276,6 +259,8 @@ void updEdgeCost(){
         break;
       } else {
         purTimes[edgeChoose]++;
+        qNode[path[edgeChoose]].memUsed++;
+        qNode[path[edgeChoose+1]].memUsed++;
         auto res = countFB(path, purTimes);
         curF = res.first;
         curP = res.second;
@@ -310,14 +295,9 @@ void routing(){
 }
 void init(){
   buildDisTable();
-  // printDisTable();
   buildGraph(); 
-  // 4 Q←Priority queue according to value of min_cost;
-  // 5 Find shortest path on G with H(min) by using BFS;
 }
 void input(){
-  // node limit 70
-  // test tle 
   double inputX, inputY, inputSwProb;
   int inputMem;
   cin >> numQn;
@@ -330,13 +310,13 @@ int main(int argc, char* argv[]){
   if(freopen(argv[1], "r", stdin) == nullptr){
     cout << argv[1] << " File Open Error" << '\n';
   }
-  double START,END; START = clock();
+  double START, END; START = clock();
   input();
   fclose(stdin);
   init();
   routing(); 
   sort(acPaths.begin(), acPaths.end());
-  printACP();
+  printALLACP();
   END = clock();
   cout << "Time: " << (END-START)/CLOCKS_PER_SEC << "s\n";
 }
