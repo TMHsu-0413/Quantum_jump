@@ -5,7 +5,7 @@ a.exe
 *.txt
 .DS_Store
 
-code/output
+code/output/*
 
 */a.out
 */a.exe
