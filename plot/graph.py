@@ -58,7 +58,7 @@ def different_threshold(y, threshold):
     plt.xlabel("Fidelity threshold")
     plt.title("Different threshold")
     plt.legend(loc="upper right")
-    plt.savefig("image/different_theta.png")
+    plt.savefig("image/different_threshold.png")
 
 def execution_time_on_different_node(time,nodes):
     name = ["Ours", "Q-Path", "Q-Leap"]
