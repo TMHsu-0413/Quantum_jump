@@ -6,8 +6,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import collections
 
-marker = ["o","s","x"]
-color = ['r','g','b']
+marker = ["o", "s", "x"]
+color = ["r", "g", "b"]
+
 
 def RLBSP_point(name, x=1.0, y=1.0):
     mx_x, mx_y = x, y
@@ -32,8 +33,39 @@ def RLBSP_point(name, x=1.0, y=1.0):
     return mx_x, mx_y
     # plt.savefig('2d_graph.png')
 
-RLBSP_point("allpoint.txt")
-RLBSP_point("RLBSPpoint.txt")
+
+def different_threshold(y, threshold):
+    """
+
+    y : 2d list
+    y : 1d list
+
+    y = [[2, 3, 4], [1, 3, 5], [4, 8, 9]]
+    """
+
+    threshold = [0.7, 0.8, 0.9]
+    name = ["Ours", "Q-Path", "Q-Leap"]
+
+    for i in range(len(y)):
+        plt.plot(threshold, y[i], color="black")
+        plt.plot(
+            threshold,
+            y[i],
+            marker=marker[i],
+            color=color[i],
+            markerfacecolor="none",
+            label=name[i],
+        )
+
+    plt.xlabel("Fidelity threshold")
+    plt.title("Different_threshold")
+    plt.legend(loc="upper right")
+    plt.savefig("image/different_theta.png")
+
+
+different_threshold([], [])
+# RLBSP_point("allpoint.txt")
+# RLBSP_point("RLBSPpoint.txt")
 plt.show()
 plt.close()
 # %%
