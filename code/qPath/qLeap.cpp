@@ -255,6 +255,7 @@ void printACP(double time) {
     cout << "error to open output.txt" << endl;
     return;
   }
+  cout<<acPaths.size()<<endl;
   for (auto x : acPaths) {
     ofs << "Path: ";
     for (auto y : x.path) {

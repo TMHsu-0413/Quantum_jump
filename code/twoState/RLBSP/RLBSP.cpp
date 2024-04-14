@@ -1,5 +1,5 @@
 #include "RLBSP.h"
-#include "../../parameter.cpp"
+// #include "../../parameter.cpp"
 #include "../formula.h"
 #include <bits/stdc++.h>
 #include <chrono>
@@ -30,17 +30,17 @@ public:
     }
     // cout << "Initial shortest path cost : " << dist[dst][0] << " " <<
     // dist[dst][1] << endl;
-    // vector<Node *> path;
-    // path.push_back(src);
-    // dfs(used, src, dst, 0, 0, path);
-    // write_to_txt(dfsAns, "allpoint.txt");
+    vector<Node *> path;
+    path.push_back(src);
+    dfs(used, src, dst, 0, 0, path);
+    write_to_txt(dfsAns, "output/allpoint.txt");
     RLBSP(dist, parent, src, dst);
     auto end = chrono::high_resolution_clock::now();
     auto diff = end - start;
     double time = chrono::duration<double>(diff).count();
     // cout << time << endl;
     write_path_info(time);
-    // write_to_txt(RLBSPAns, "RLBSPpoint.txt");
+    write_to_txt(RLBSPAns, "output/RLBSPpoint.txt");
     //  cout << "\n\ncost2 shortest path cost : " << cost2_sp[1] << " " <<
     //  cost2_sp[0] << endl;
   }
@@ -261,9 +261,8 @@ protected:
   void dfs(unordered_map<Node *, bool> &used, Node *cur, Node *d, double c1,
            double c2, vector<Node *> &v) {
     if (cur == d) {
-      cout << "Fidelity : " << exp(-c1) << " "
-           << "Probability : " << exp(-c2) << endl;
-      printPath(v);
+      //cout << "Fidelity : " << exp(-c1) << " " << "Probability : " << exp(-c2) << endl;
+      //printPath(v);
       // dfsAns.push_back({exp(-c1), exp(-c2)});
       dfsAns.push_back({c1, c2});
       return;
@@ -604,11 +603,11 @@ protected:
 };
 
 int main(int argc, char *argv[]) {
-  if (argc != 2) {
+  if (argc != 3) {
     cout << "g++ <input.txt> is need";
     return 1;
   }
   double beta = 0.00438471;
-  RLBSP_Algo rlbsp(argv[1], threshold, beta);
+  RLBSP_Algo rlbsp(argv[1], atof(argv[2]), beta);
   rlbsp.run();
 }
