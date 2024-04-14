@@ -40,10 +40,7 @@ def different_threshold(y, threshold):
     y : 2d list
     y : 1d list
 
-    y = [[2, 3, 4], [1, 3, 5], [4, 8, 9]]
     """
-
-    threshold = [0.7, 0.8, 0.9]
     name = ["Ours", "Q-Path", "Q-Leap"]
 
     for i in range(len(y)):
@@ -57,13 +54,36 @@ def different_threshold(y, threshold):
             label=name[i],
         )
 
+    plt.xticks(threshold)
     plt.xlabel("Fidelity threshold")
-    plt.title("Different_threshold")
+    plt.title("Different threshold")
     plt.legend(loc="upper right")
     plt.savefig("image/different_theta.png")
 
+def execution_time_on_different_node(time,nodes):
+    name = ["Ours", "Q-Path", "Q-Leap"]
 
-different_threshold([], [])
+    for i in range(len(time)):
+        plt.plot(nodes, time[i], color="black")
+        plt.plot(
+            nodes,
+            time[i],
+            marker=marker[i],
+            color=color[i],
+            markerfacecolor="none",
+            label=name[i],
+        )
+
+    plt.xticks(nodes)
+    plt.xlabel("the number of node")
+    plt.title("Different nodes")
+    plt.legend(loc="upper right")
+    plt.savefig("image/different_node.png")
+
+
+# 某個8個節點 memory 10-14的case，0代表找不到`
+different_threshold([[0.0288548,0.0131193,0.00488779],[0.00748051,0.00095429,0.000147434],[0.000206319,0,0]], [0.7.0.8,0.9])
+#different_nodes([[0.0658073,],[0.0201253],[]],[10,50,70])
 # RLBSP_point("allpoint.txt")
 # RLBSP_point("RLBSPpoint.txt")
 plt.show()

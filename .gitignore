@@ -6,6 +6,7 @@ a.exe
 .DS_Store
 
 code/output/*
+plot/image/*
 
 */a.out
 */a.exe
