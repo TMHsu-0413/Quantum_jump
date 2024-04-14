@@ -314,7 +314,7 @@ int main(int argc, char* argv[]){
   init();
   routing(); 
   sort(acPaths.begin(), acPaths.end());
-  printACP();
+  printALLACP();
   END = clock();
   cout << "Time: " << (END-START)/CLOCKS_PER_SEC << "s\n";
 }
