@@ -5,6 +5,8 @@ a.exe
 *.txt
 .DS_Store
 
+code/output/*
+
 */a.out
 */a.exe
 */2d_graph.png

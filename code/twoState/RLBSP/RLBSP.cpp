@@ -1,4 +1,5 @@
 #include "RLBSP.h"
+#include "../../parameter.cpp"
 #include "../formula.h"
 #include <bits/stdc++.h>
 #include <chrono>
@@ -37,8 +38,8 @@ public:
     auto end = chrono::high_resolution_clock::now();
     auto diff = end - start;
     double time = chrono::duration<double>(diff).count();
-    cout << time << endl;
-    // write_path_info(time);
+    // cout << time << endl;
+    write_path_info(time);
     // write_to_txt(RLBSPAns, "RLBSPpoint.txt");
     //  cout << "\n\ncost2 shortest path cost : " << cost2_sp[1] << " " <<
     //  cost2_sp[0] << endl;
@@ -568,7 +569,7 @@ protected:
 
   void write_path_info(double time) {
     ofstream ofs;
-    ofs.open("RLBSP_path.txt");
+    ofs.open("output/RLBSPpath.txt");
     if (!ofs.is_open()) {
       cout << "error to open output.txt" << endl;
       return;
@@ -601,3 +602,12 @@ protected:
       ofs << e[0] << " " << e[1] << endl;
   }
 };
+
+int main(int argc, char *argv[]) {
+  if (argc != 2) {
+    cout << "g++ <input.txt> is need";
+    return 1;
+  }
+  RLBSP_Algo rlbsp(argv[1], threshold, beta);
+  rlbsp.run();
+}
