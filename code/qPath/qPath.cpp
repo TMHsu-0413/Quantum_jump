@@ -23,7 +23,7 @@ void printSP();
 void printALLACP();
 void printKSP();
 void printPath(vector<int> &path);
-void printACP();
+void printACP(double time);
 void printPurifiTable();
 void printNodeInfo() {
   for (int i = 0; i < numQn; i++) {
@@ -323,16 +323,16 @@ int main(int argc, char *argv[]) {
   if (freopen(argv[1], "r", stdin) == nullptr) {
     cout << argv[1] << " File Open Error" << '\n';
   }
-  double START, END;
-  START = clock();
   input();
   fclose(stdin);
+  auto start = chrono::high_resolution_clock::now();
   init();
   routing();
   sort(acPaths.begin(), acPaths.end());
-  printALLACP();
-  END = clock();
-  cout << "Time: " << (END - START) / CLOCKS_PER_SEC << "s\n";
+  auto end = chrono::high_resolution_clock::now();
+  auto diff = end - start;
+  double time = chrono::duration<double>(diff).count();
+  printACP(time);
 }
 void printPath(vector<int> &path) {
   for (auto &p : path) {
@@ -374,21 +374,28 @@ void printKSP() {
     cout << '\n';
   }
 }
-void printACP() {
+void printACP(double time) {
+  ofstream ofs;
+  ofs.open("output/qPath.txt");
+  if (!ofs.is_open()) {
+    cout << "error to open output.txt" << endl;
+    return;
+  }
   auto x = acPaths[0];
-  cout << "Path: ";
+  ofs << "Path: ";
   for (auto y : x.path) {
-    cout << y << " ";
+    ofs << y << " ";
   }
-  cout << '\n';
-  cout << "PurTimes: ";
+  ofs << '\n';
+  ofs << "PurTimes: ";
   for (int i = 0; i < x.path.size() - 1; i++) {
-    cout << x.purTimes[i] << " ";
+    ofs << x.purTimes[i] << " ";
   }
-  cout << '\n';
+  ofs << '\n';
   auto tmp = countFB(x.path, x.purTimes);
-  cout << "Fidelity: " << tmp.first << '\n';
-  cout << "Probability: " << tmp.second << '\n';
+  ofs << "Fidelity: " << tmp.first << '\n';
+  ofs << "Probability: " << tmp.second << '\n';
+  ofs << "Time: " << time << '\n';
 }
 void printALLACP() {
   for (int i = 0; i < acPaths.size(); i++) {

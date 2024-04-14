@@ -608,6 +608,7 @@ int main(int argc, char *argv[]) {
     cout << "g++ <input.txt> is need";
     return 1;
   }
+  double beta = 0.00438471;
   RLBSP_Algo rlbsp(argv[1], threshold, beta);
   rlbsp.run();
 }
