@@ -176,7 +176,7 @@ private:
             return false;
         // 中間的memory檢查
         for(int i=1; i<l-1; i++){
-            if (memory[path[i]] < (purifyTime[i-1] + purifyTime[i] + 1))
+            if (memory[path[i]] < (purifyTime[i-1] + purifyTime[i] + 2))
                 return false;
         }
         return true;

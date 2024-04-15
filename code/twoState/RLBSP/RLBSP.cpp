@@ -32,7 +32,7 @@ public:
     // dist[dst][1] << endl;
     vector<Node *> path;
     path.push_back(src);
-    // dfs(used, src, dst, 0, 0, path);
+    //dfs(used, src, dst, 0, 0, path);
     // write_to_txt(dfsAns, "output/allpoint.txt");
     RLBSP(dist, parent, src, dst);
     auto end = chrono::high_resolution_clock::now();
@@ -261,8 +261,8 @@ protected:
   void dfs(unordered_map<Node *, bool> &used, Node *cur, Node *d, double c1,
            double c2, vector<Node *> &v) {
     if (cur == d) {
-      // cout << "Fidelity : " << exp(-c1) << " " << "Probability : " <<
-      // exp(-c2) << endl; printPath(v);
+       cout << "Fidelity : " << exp(-c1) << " " << "Probability : " << exp(-c2) << endl; 
+       printPath(v);
       //  dfsAns.push_back({exp(-c1), exp(-c2)});
       dfsAns.push_back({c1, c2});
       return;
