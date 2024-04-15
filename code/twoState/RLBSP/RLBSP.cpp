@@ -568,7 +568,7 @@ protected:
 
   void write_path_info(double time) {
     ofstream ofs;
-    ofs.open("output/RLBSPpath.txt");
+    ofs.open("output/RLBSP.txt");
     if (!ofs.is_open()) {
       cout << "error to open output.txt" << endl;
       return;
