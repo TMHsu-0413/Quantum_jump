@@ -4,11 +4,11 @@
 using namespace std;
 vector<Node> qNode;
 unordered_map<pair<int, int>, double, pairHash> disTable;
-vector<vector<int>> kSP;
+vector<vector<int>> kSP, tmpKSP;
 vector<acceptPath> acPaths;
 int routingReq, numQn, minCost, maxCost;
-double threshold;
 int edgeIdMap[100][100];
+double threshold;
 struct CompareVector {
   bool operator()(const vector<int> &a, const vector<int> &b) const {
     if (a.size() == b.size()) {
@@ -23,6 +23,7 @@ void printGraph();
 void printSP();
 void printALLACP();
 void printKSP();
+void printTmpKSP();
 void printPath(vector<int> &path);
 void printACP(double time);
 void printPurifiTable();
@@ -64,10 +65,6 @@ void buildGraph() {
     edgeCnt = 0;
     for (int j = i + 1; j < numQn; j++) {
       edgeIdMap[i][j] = edgeCnt++;
-      // if(j != i+1){
-      //   qNode[i].memUsed++; // use to swap
-      //   qNode[j].memUsed++; // use to swap
-      // }
       double curProb = entangle_success_prob(disTable[{i, j}]);
       double enProb = curProb;
       double curFidelity = entangle_fidelity(disTable[{i, j}], BETA); // define
@@ -175,45 +172,7 @@ pair<double, double> countFB(vector<int> path, vector<int> purTimes) {
   }
   return cur;
 }
-vector<int> dijkstra(int src, int dest) {
-  vector<double> maxFidelity(qNode.size(), 0.0);
-  vector<int> parent(qNode.size(), -1);
-  priority_queue<pair<double, int>, vector<pair<double, int>>> pq;
 
-  pq.push({1, src});
-
-  while (!pq.empty()) {
-    auto [curF, curNode] = pq.top();
-    pq.pop();
-
-    if (curNode == dest) {
-      break;
-    }
-
-    for (auto &edge : qNode[curNode].neighbor) {
-      if (edge.canUse) {
-        double newFidelity = curF * edge.fidelity;
-        if (newFidelity > maxFidelity[edge.to]) {
-          maxFidelity[edge.to] = newFidelity;
-          parent[edge.to] = curNode;
-          pq.push({newFidelity, edge.to});
-        }
-      }
-    }
-  }
-
-  vector<int> path;
-  for (int at = dest; at != -1; at = parent[at]) {
-    path.push_back(at);
-  }
-  reverse(path.begin(), path.end());
-  if (!path.empty() && path[0] == src) {
-    return path;
-  }
-
-  return {};
-}
-// return shortest path with fidelity
 vector<int> bfsSP(int s, int d) {
   // return shortest path with s->d
   queue<int> que;
@@ -247,26 +206,43 @@ vector<int> bfsSP(int s, int d) {
   reverse(ret.begin(), ret.end());
   return ret;
 }
-
-void yenKSP(int src, int dest, int K, int H) {
+void preKsp(int minHop, int maxHop, int targetN){
   vector<vector<int>> A; // KSP set
   priority_queue<vector<int>, vector<vector<int>>, CompareVector> B;
 
-  vector<int> initialPath = dijkstra(src, dest);
-
+  vector<int> initialPath = bfsSP(0, numQn-1);
   if (initialPath.empty()) {
     return;
   }
 
   A.push_back(initialPath);
-  
 
   bool overSize = 0;
   int cnt = 0;
+  int curK = 0, curH = minCost;
+  // 如果有 curK 條長度為 curH 的就可以改用長度為 curH 的進行偏離
+  // 如果有長度超過 curH 就 curH ++，視為已經找到足夠多的
+  
 
-  for (int k = 1; cnt < K && !overSize; k++) { // k < K*2 &&
-    for (size_t i = 0; i < A[k - 1].size() - 1 && cnt < K && !overSize; ++i) { // !overSize
+  for (int k = 1; cnt < targetN && !overSize; k++) { 
+    
+    // cut 
+    cout << "curK " << curK << " curH " << curH << '\n';
+    if(A[k-1].size() < curH){
+      cout << "cut at " << curH << '\n';
+    }
+    // cut
+
+    for (size_t i = 0; i < A[k - 1].size() - 1 && cnt < targetN && !overSize; ++i) { // !overSize
       // store origin statue (canUse)
+      
+      // cut
+      if(A[k-1].size() < curH){
+        cout << "cut at " << curH << '\n';
+        break;
+      }
+      // cut
+
       vector<Node> qNodeBackup = qNode;
       int spurNode = A[k - 1][i];
       vector<int> rootPath(A[k - 1].begin(), A[k - 1].begin() + i + 1);
@@ -279,28 +255,48 @@ void yenKSP(int src, int dest, int K, int H) {
         }
       }
 
-      vector<int> spurPath = dijkstra(spurNode, dest);
+      vector<int> spurPath = bfsSP(spurNode, numQn-1);
+
       if (!spurPath.empty()) {
         vector<int> totalPath = rootPath;
         
         totalPath.insert(totalPath.end(), spurPath.begin() + 1,
                          spurPath.end()); // prevent add multiple spurNode
-        if(totalPath.size() == H+1) cnt++; // dangerous
-        if(totalPath.size() > H+1){
-          cout << "total size " << totalPath.size() << " H " << H << '\n';
-          overSize = 1; 
-        } 
+                         
+        int len = totalPath.size();
+
+        // cut
+        if(len == curH){
+          curK++;
+        }
+        if(curK > targetN || len > curH+1){
+          cout << "get targetN " << curK << '\n';
+          curH++;
+          curK=0;
+        }
+        // cut
+
+        if(totalPath.size() > maxHop+1) overSize = 1; 
+        if(totalPath.size() == maxHop) cnt++;
+        if(cnt > targetN){
+          overSize = 1;
+          cout << "get targetN\n";
+        }
         try {
+          // if(totalPath.size() >= curH)
           B.push(totalPath);
         } catch (const std::bad_alloc& e) {
           std::cerr << "Allocation failed: " << e.what() << '\n';
           assert(0);
         }
         
+        // cut
+        // cut
       }
 
       // recover
       qNode = qNodeBackup;
+      
     }
 
     if (B.empty())
@@ -314,20 +310,8 @@ void yenKSP(int src, int dest, int K, int H) {
     
     B.pop();
   }
-  // cout << "A\n";
-  // for(auto x: A){
-  //   printPath(x);
-  // }
-  // cut
-  int cntK = 0;
-  vector<vector<int>> tmp;
-  for (int i = 0; i < A.size() && cntK < K; i++) {
-    if (A[i].size() == H && cntK < K) {
-      tmp.push_back(A[i]);
-      cntK++;
-    }
-  }
-  kSP = tmp;
+  tmpKSP = A;
+  printTmpKSP();
 }
 
 int purifyDicision(
@@ -351,6 +335,20 @@ int purifyDicision(
     }
   }
   return -1;
+}
+int getHPath(int h, int last, int K){
+  vector<vector<int> >tmp;
+  int i = last;
+  int cnt = 0;
+  for (; i < tmpKSP.size(); i++){
+    if(tmpKSP[i].size() == h ){ // && cnt++ < K
+      tmp.push_back(tmpKSP[i]);
+    } else if(tmpKSP[i].size() > h){
+      break;
+    }
+  }
+  kSP = tmp;
+  return i;
 }
 void updEdgeCost() {
   // 如果 path Fidelity 沒過，就不斷找 purify 後 F 差異最大的進行 purify。
@@ -411,10 +409,12 @@ void updEdgeCost() {
     }
   }
 }
-
 void routing() {
   minCost = bfsSP(0, numQn - 1).size();
   maxCost = numQn + 1;
+  int last = 0;
+  int K = 10;
+  preKsp(minCost, maxCost, 10);
   for (int i = minCost; i < maxCost; i++) { // maxCost
     if (!kSP.empty()){
       for(int i=0; i<kSP.size(); i++)
@@ -422,16 +422,16 @@ void routing() {
       kSP.clear();
     }
     cout << "rounting on " << i << " cost\n";
-    yenKSP(0, numQn - 1, 10, i+1);
-    printKSP();
+    last = getHPath(i, last, K);
+    // yenKSP(0, numQn - 1, minCost * 10, i);
     // 不能限制 k
     // 剛好是指定長度，可能會漏，但我猜應該只要多找一點在砍掉就可以了，另外注意
     // i 是 node 數量不是 hop 數    
     updEdgeCost();
     resetMemUsed();
-    
   }
 }
+
 void init() {
   buildDisTable();
   buildGraph();
@@ -459,6 +459,7 @@ int main(int argc, char *argv[]) {
   auto start = chrono::high_resolution_clock::now();
   init();
   routing();
+  printKSP();
   sort(acPaths.begin(), acPaths.end());
   auto end = chrono::high_resolution_clock::now();
   auto diff = end - start;
@@ -470,7 +471,7 @@ int main(int argc, char *argv[]) {
 }
 void printPath(vector<int> &path) {
   for (auto &p : path) {
-    cout << p << "  ";
+    cout << p << " ";
   }
   cout << endl;
 }
@@ -503,6 +504,15 @@ void printKSP() {
   for (int i = 0; i < kSP.size(); i++) {
     cout << "kSP " << i << ": ";
     for (auto x : kSP[i]) {
+      cout << x << " ";
+    }
+    cout << '\n';
+  }
+}
+void printTmpKSP() {
+  for (int i = 0; i < tmpKSP.size(); i++) {
+    cout << "tmpkSP " << i << ": ";
+    for (auto x : tmpKSP[i]) {
       cout << x << " ";
     }
     cout << '\n';
