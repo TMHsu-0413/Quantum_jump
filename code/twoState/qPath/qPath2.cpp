@@ -7,6 +7,7 @@ unordered_map<pair<int, int>, double, pairHash> disTable;
 vector<vector<int>> kSP, tmpKSP;
 vector<acceptPath> acPaths;
 int routingReq, numQn, minCost, maxCost;
+int edgeIdMap[100][100];
 double threshold;
 struct CompareVector {
   bool operator()(const vector<int> &a, const vector<int> &b) const {
@@ -26,6 +27,14 @@ void printTmpKSP();
 void printPath(vector<int> &path);
 void printACP(double time);
 void printPurifiTable();
+int findEdge(int a, int b){
+  // if(edgeIdMap[a][b] != qNode[a].findEdge(a, b)){
+  //   cout << "wrong table edge " << a << ' ' << b << '\n';
+  //   cout << edgeIdMap[a][b] << ' ' << qNode[a].findEdge(a, b);
+  // }
+  // assert(edgeIdMap[a][b] == qNode[a].findEdge(a, b));
+  return edgeIdMap[a][b];
+}
 void printNodeInfo() {
   for (int i = 0; i < numQn; i++) {
     cout << "node " << i << " x " << qNode[i].x << " y " << qNode[i].y
@@ -51,13 +60,11 @@ void buildDisTable() {
   }
 }
 void buildGraph() {
+  int edgeCnt = 0;
   for (int i = 0; i < numQn; i++) {
+    edgeCnt = 0;
     for (int j = i + 1; j < numQn; j++) {
-      // if(j != i+1){
-      //   qNode[i].memUsed++; // use to swap
-      //   qNode[j].memUsed++; // use to swap
-      // }
-      
+      edgeIdMap[i][j] = edgeCnt++;
       double curProb = entangle_success_prob(disTable[{i, j}]);
       double enProb = curProb;
       double curFidelity = entangle_fidelity(disTable[{i, j}], BETA); // define
@@ -125,7 +132,7 @@ pair<double, double> countFB(vector<int> path, vector<int> purTimes) {
   for (int i = 0; i < path.size() - 1; i++) {
     int curNode = path[i];
     int nextNode = path[i + 1];
-    int edgeIdx = qNode[curNode].findEdge(curNode, nextNode);
+    int edgeIdx = findEdge(curNode, nextNode);
 
     if(!checkMem(curNode, nextNode)){
       memOverFlow = 1;
@@ -223,7 +230,7 @@ void preKsp(int minHop, int maxHop, int targetN){
       for (auto &path : A) {
         if (rootPath.size() < path.size() &&
             equal(rootPath.begin(), rootPath.end(), path.begin())) {
-          int edgeIdx = qNode[path[i]].findEdge(path[i], path[i + 1]);
+          int edgeIdx = findEdge(path[i], path[i + 1]);
           qNode[path[i]].neighbor[edgeIdx].canUse = 0;
         }
       }
@@ -296,7 +303,7 @@ void yenKSP(int src, int dest, int K, int H) {
       for (auto &path : A) {
         if (rootPath.size() < path.size() &&
             equal(rootPath.begin(), rootPath.end(), path.begin())) {
-          int edgeIdx = qNode[path[i]].findEdge(path[i], path[i + 1]);
+          int edgeIdx = findEdge(path[i], path[i + 1]);
           qNode[path[i]].neighbor[edgeIdx].canUse = 0;
         }
       }
@@ -358,7 +365,7 @@ int purifyDicision(
     purDicision.pop();
     int curNode = path[edgeChoose];
     int nextNode = path[edgeChoose + 1];
-    int edgeIdx = qNode[curNode].findEdge(curNode, nextNode);
+    int edgeIdx = findEdge(curNode, nextNode);
     vector<double> edgePurF = qNode[curNode].neighbor[edgeIdx].purFidelity;
 
     int curNodeMemUsed = 1 + qNode[curNode].memUsed; //purTimes[edgeChoose]
@@ -403,7 +410,7 @@ void updEdgeCost() {
       for (int i = 0; i < path.size() - 1; i++) {
         int curNode = path[i];
         int nextNode = path[i + 1];
-        int edgeIdx = qNode[curNode].findEdge(curNode, nextNode);
+        int edgeIdx = findEdge(curNode, nextNode);
         vector<double> edgePurF = qNode[curNode].neighbor[edgeIdx].purFidelity;
         if (purTimes[i] + 1 < edgePurF.size()) {
           purDicision.push({edgePurF[purTimes[i] + 1] - edgePurF[purTimes[i]],
@@ -493,7 +500,6 @@ int main(int argc, char *argv[]) {
   init();
   routing();
   printKSP();
-  printTmpKSP();
   sort(acPaths.begin(), acPaths.end());
   auto end = chrono::high_resolution_clock::now();
   auto diff = end - start;
@@ -505,7 +511,7 @@ int main(int argc, char *argv[]) {
 }
 void printPath(vector<int> &path) {
   for (auto &p : path) {
-    cout << p << "  ";
+    cout << p << " ";
   }
   cout << endl;
 }
@@ -554,7 +560,7 @@ void printTmpKSP() {
 }
 void printACP(double time) {
   ofstream ofs;
-  ofs.open("output/qPath.txt");
+  ofs.open("output/qPath2.txt");
   if (!ofs.is_open()) {
     cout << "error to open output.txt" << endl;
     return;
