@@ -4,9 +4,10 @@
 using namespace std;
 vector<Node> qNode;
 unordered_map<pair<int, int>, double, pairHash> disTable;
-vector<vector<int>> kSP;
+vector<vector<int>> kSP, tmpKSP;
 vector<acceptPath> acPaths;
 int routingReq, numQn, minCost, maxCost;
+int edgeIdMap[100][100];
 double threshold;
 struct CompareVector {
   bool operator()(const vector<int> &a, const vector<int> &b) const {
@@ -22,9 +23,18 @@ void printGraph();
 void printSP();
 void printALLACP();
 void printKSP();
+void printTmpKSP();
 void printPath(vector<int> &path);
 void printACP(double time);
 void printPurifiTable();
+int findEdge(int a, int b){
+  // if(edgeIdMap[a][b] != qNode[a].findEdge(a, b)){
+  //   cout << "wrong table edge " << a << ' ' << b << '\n';
+  //   cout << edgeIdMap[a][b] << ' ' << qNode[a].findEdge(a, b);
+  // }
+  // assert(edgeIdMap[a][b] == qNode[a].findEdge(a, b));
+  return edgeIdMap[a][b];
+}
 void printNodeInfo() {
   for (int i = 0; i < numQn; i++) {
     cout << "node " << i << " x " << qNode[i].x << " y " << qNode[i].y
@@ -50,12 +60,11 @@ void buildDisTable() {
   }
 }
 void buildGraph() {
+  int edgeCnt = 0;
   for (int i = 0; i < numQn; i++) {
+    edgeCnt = 0;
     for (int j = i + 1; j < numQn; j++) {
-      if(j != i+1){
-        qNode[i].memUsed++; // use to swap
-        qNode[j].memUsed++; // use to swap
-      }
+      edgeIdMap[i][j] = edgeCnt++;
       double curProb = entangle_success_prob(disTable[{i, j}]);
       double enProb = curProb;
       double curFidelity = entangle_fidelity(disTable[{i, j}], BETA); // define
@@ -99,11 +108,11 @@ void resetMemUsed() {
   for (int i = 0; i < numQn; i++) {
     qNode[i].memUsed = 0;
   }
-  for (int i = 0; i < numQn; i++){
-    for (int j = i+2; j < numQn; j++){
-      qNode[i].memUsed++;
-    }
-  }
+  // for (int i = 0; i < numQn; i++){
+  //   for (int j = i+2; j < numQn; j++){
+  //     qNode[i].memUsed++;
+  //   }
+  // }
 }
 bool checkMem(int curNode, int nextNode){
   if (qNode[curNode].memUsed > qNode[curNode].mem ||
@@ -123,7 +132,7 @@ pair<double, double> countFB(vector<int> path, vector<int> purTimes) {
   for (int i = 0; i < path.size() - 1; i++) {
     int curNode = path[i];
     int nextNode = path[i + 1];
-    int edgeIdx = qNode[curNode].findEdge(curNode, nextNode);
+    int edgeIdx = findEdge(curNode, nextNode);
 
     if(!checkMem(curNode, nextNode)){
       memOverFlow = 1;
@@ -197,7 +206,94 @@ vector<int> bfsSP(int s, int d) {
   reverse(ret.begin(), ret.end());
   return ret;
 }
+void preKsp(int minHop, int maxHop, int targetN){
+  vector<vector<int>> A; // KSP set
+  priority_queue<vector<int>, vector<vector<int>>, CompareVector> B;
 
+  vector<int> initialPath = bfsSP(0, numQn-1);
+  if (initialPath.empty()) {
+    return;
+  }
+
+  A.push_back(initialPath);
+
+  bool overSize = 0;
+  int curK = 0, curH = minHop, cnt = 0;
+  // curK, curH 用來做剪枝
+  // 當前路徑期望值是 curH，如果有 curK 個 curH 長的序列就可以用那 curK 個開始偏離
+  
+  for (int k = 1; cnt < targetN && !overSize; k++) { 
+    for (size_t i = 0; i < A[k - 1].size() - 1 && cnt < targetN && !overSize; ++i) { // !overSize
+      // store origin statue (canUse)
+      vector<Node> qNodeBackup = qNode;
+      int spurNode = A[k - 1][i];
+      vector<int> rootPath(A[k - 1].begin(), A[k - 1].begin() + i + 1);
+
+      for (auto &path : A) {
+        if (rootPath.size() < path.size() &&
+            equal(rootPath.begin(), rootPath.end(), path.begin())) {
+          int edgeIdx = findEdge(path[i], path[i + 1]);
+          qNode[path[i]].neighbor[edgeIdx].canUse = 0;
+        }
+      }
+
+      vector<int> spurPath = bfsSP(spurNode, numQn-1);
+
+      if (!spurPath.empty()) {
+        vector<int> totalPath = rootPath;
+        
+        totalPath.insert(totalPath.end(), spurPath.begin() + 1,
+                         spurPath.end()); // prevent add multiple spurNode
+
+        // if(totalPath.size() == curH){
+        //   curK++;
+        // }
+        // if(totalPath.size() > curH+1){
+        //   curH++;
+        //   curK=0;
+        // }
+        
+        if(totalPath.size() > maxHop+1) overSize = 1; 
+        if(totalPath.size() == maxHop) cnt++;
+        if(cnt > targetN){
+          overSize = 1;
+          cout << "get targetN\n";
+        }
+        cout << "total path size = " << totalPath.size() << '\n';
+        try {
+          // if(totalPath.size() >= curH)
+          B.push(totalPath);
+        } catch (const std::bad_alloc& e) {
+          std::cerr << "Allocation failed: " << e.what() << '\n';
+          assert(0);
+        }
+        // cut edge
+        // if(curK == targetN*2){
+        //   curK = 0;
+        //   curH ++;
+        //   break;
+        // } 
+      }
+
+      // recover
+      qNode = qNodeBackup;
+    }
+
+    if (B.empty())
+      break;
+    try {
+      A.push_back(B.top());
+    } catch (const std::bad_alloc& e) {
+        std::cerr << "Allocation failed: " << e.what() << '\n';
+        assert(0);
+    }
+    
+    B.pop();
+  }
+  // cut
+  tmpKSP = A;
+  printTmpKSP();
+}
 void yenKSP(int src, int dest, int K, int H) {
   vector<vector<int>> A; // KSP set
   priority_queue<vector<int>, vector<vector<int>>, CompareVector> B;
@@ -222,7 +318,7 @@ void yenKSP(int src, int dest, int K, int H) {
       for (auto &path : A) {
         if (rootPath.size() < path.size() &&
             equal(rootPath.begin(), rootPath.end(), path.begin())) {
-          int edgeIdx = qNode[path[i]].findEdge(path[i], path[i + 1]);
+          int edgeIdx = findEdge(path[i], path[i + 1]);
           qNode[path[i]].neighbor[edgeIdx].canUse = 0;
         }
       }
@@ -284,7 +380,7 @@ int purifyDicision(
     purDicision.pop();
     int curNode = path[edgeChoose];
     int nextNode = path[edgeChoose + 1];
-    int edgeIdx = qNode[curNode].findEdge(curNode, nextNode);
+    int edgeIdx = findEdge(curNode, nextNode);
     vector<double> edgePurF = qNode[curNode].neighbor[edgeIdx].purFidelity;
 
     int curNodeMemUsed = 1 + qNode[curNode].memUsed; //purTimes[edgeChoose]
@@ -297,6 +393,19 @@ int purifyDicision(
   }
   return -1;
 }
+int getHPath(int h, int last){
+  vector<vector<int> >tmp;
+  int i = last;
+  for (; i < tmpKSP.size(); i++){
+    if(tmpKSP[i].size() == h){
+      tmp.push_back(tmpKSP[i]);
+    } else if(tmpKSP[i].size() > h){
+      break;
+    }
+  }
+  kSP = tmp;
+  return i;
+}
 void updEdgeCost() {
   // 如果 path Fidelity 沒過，就不斷找 purify 後 F 差異最大的進行 purify。
   for (int i = 0; i < kSP.size(); i++) {
@@ -305,14 +414,18 @@ void updEdgeCost() {
     auto tmp = countFB(path, purTimes);
     double curF = tmp.first, curP = tmp.second;
     priority_queue<pair<double, int>, vector<pair<double, int>>> purDicision;
-
+    // add swap mem used
+    for (int i = 0; i<path.size() - 1; i++) {
+      qNode[path[i]].memUsed++;
+      qNode[path[i+1]].memUsed++;
+    }
     bool pathFailed = 0;
     while (curF < threshold && curF) {
       // push {fidelity diff, edge idx} into pq
       for (int i = 0; i < path.size() - 1; i++) {
         int curNode = path[i];
         int nextNode = path[i + 1];
-        int edgeIdx = qNode[curNode].findEdge(curNode, nextNode);
+        int edgeIdx = findEdge(curNode, nextNode);
         vector<double> edgePurF = qNode[curNode].neighbor[edgeIdx].purFidelity;
         if (purTimes[i] + 1 < edgePurF.size()) {
           purDicision.push({edgePurF[purTimes[i] + 1] - edgePurF[purTimes[i]],
@@ -344,16 +457,19 @@ void updEdgeCost() {
     cout << "puriTimes "; for(auto x : purTimes){ cout << x << " "; } cout << '\n';
     cout << "curF " << curF << '\n';
     cout << "curP " << curP << '\n';
+    cout << "mem used "; for(auto x : path){ cout << qNode[x].memUsed << ' '; } cout << '\n';
+    cout << "mem limit "; for(auto x : path){ cout << qNode[x].mem << ' '; } cout << '\n';
     resetMemUsed();
     if (curF >= threshold && !pathFailed) {
       acPaths.push_back({curF, curP, kSP[i], purTimes});
     }
   }
 }
-
 void routing() {
   minCost = bfsSP(0, numQn - 1).size();
   maxCost = numQn + 1;
+  int last = 0;
+  preKsp(minCost, maxCost, 10);
   for (int i = minCost; i < maxCost; i++) { // maxCost
     if (!kSP.empty()){
       for(int i=0; i<kSP.size(); i++)
@@ -361,7 +477,8 @@ void routing() {
       kSP.clear();
     }
     cout << "rounting on " << i << " cost\n";
-    yenKSP(0, numQn - 1, minCost * 10, i);
+    last = getHPath(i, last);
+    // yenKSP(0, numQn - 1, minCost * 10, i);
     // 不能限制 k
     // 剛好是指定長度，可能會漏，但我猜應該只要多找一點在砍掉就可以了，另外注意
     // i 是 node 數量不是 hop 數    
@@ -369,6 +486,7 @@ void routing() {
     resetMemUsed();
   }
 }
+
 void init() {
   buildDisTable();
   buildGraph();
@@ -396,6 +514,7 @@ int main(int argc, char *argv[]) {
   auto start = chrono::high_resolution_clock::now();
   init();
   routing();
+  printKSP();
   sort(acPaths.begin(), acPaths.end());
   auto end = chrono::high_resolution_clock::now();
   auto diff = end - start;
@@ -407,7 +526,7 @@ int main(int argc, char *argv[]) {
 }
 void printPath(vector<int> &path) {
   for (auto &p : path) {
-    cout << p << "  ";
+    cout << p << " ";
   }
   cout << endl;
 }
@@ -445,9 +564,18 @@ void printKSP() {
     cout << '\n';
   }
 }
+void printTmpKSP() {
+  for (int i = 0; i < tmpKSP.size(); i++) {
+    cout << "tmpkSP " << i << ": ";
+    for (auto x : tmpKSP[i]) {
+      cout << x << " ";
+    }
+    cout << '\n';
+  }
+}
 void printACP(double time) {
   ofstream ofs;
-  ofs.open("output/qPath.txt");
+  ofs.open("output/qPath2.txt");
   if (!ofs.is_open()) {
     cout << "error to open output.txt" << endl;
     return;
