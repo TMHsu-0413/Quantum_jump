@@ -218,13 +218,10 @@ void preKsp(int minHop, int maxHop, int targetN){
   A.push_back(initialPath);
 
   bool overSize = 0;
-  int curK = 0, curH = minHop, cnt = 0;
-  // curK, curH 用來做剪枝
-  // 當前路徑期望值是 curH，如果有 curK 個 curH 長的序列就可以用那 curK 個開始偏離
+  int cnt = 0;
   
   for (int k = 1; cnt < targetN && !overSize; k++) { 
     // cut 
-    if(A[k-1].size() < curH) continue;
     for (size_t i = 0; i < A[k - 1].size() - 1 && cnt < targetN && !overSize; ++i) { // !overSize
       // store origin statue (canUse)
       vector<Node> qNodeBackup = qNode;
@@ -247,14 +244,6 @@ void preKsp(int minHop, int maxHop, int targetN){
         totalPath.insert(totalPath.end(), spurPath.begin() + 1,
                          spurPath.end()); // prevent add multiple spurNode
 
-        // cut
-        if(totalPath.size() == curH){
-          curK++;
-        }
-        if(totalPath.size() > curH+1){
-          curH++;
-          curK=0;
-        }
 
         if(totalPath.size() > maxHop+1) overSize = 1; 
         if(totalPath.size() == maxHop) cnt++;
@@ -262,8 +251,6 @@ void preKsp(int minHop, int maxHop, int targetN){
           overSize = 1;
           cout << "get targetN\n";
         }
-        cout << "total path size = " << totalPath.size() << '\n';
-        cout << "curK " << curK << " curH " << curH << '\n';
         try {
           // if(totalPath.size() >= curH)
           B.push(totalPath);
@@ -271,19 +258,11 @@ void preKsp(int minHop, int maxHop, int targetN){
           std::cerr << "Allocation failed: " << e.what() << '\n';
           assert(0);
         }
-        
       }
 
       // recover
       qNode = qNodeBackup;
       
-      // cut edge
-      // if(curK == targetN*2){
-      //   cout << "curK = " << curK << " == target " << targetN << '\n';
-      //   curK = 0;
-      //   curH ++;
-      //   break;
-      // } 
     }
 
     if (B.empty())
@@ -400,11 +379,12 @@ int purifyDicision(
   }
   return -1;
 }
-int getHPath(int h, int last){
+int getHPath(int h, int last, int K){
   vector<vector<int> >tmp;
   int i = last;
+  int cnt = 0;
   for (; i < tmpKSP.size(); i++){
-    if(tmpKSP[i].size() == h){
+    if(tmpKSP[i].size() == h && cnt++<K){
       tmp.push_back(tmpKSP[i]);
     } else if(tmpKSP[i].size() > h){
       break;
@@ -476,6 +456,7 @@ void routing() {
   minCost = bfsSP(0, numQn - 1).size();
   maxCost = numQn + 1;
   int last = 0;
+  int K = 10;
   preKsp(minCost, maxCost, 10);
   for (int i = minCost; i < maxCost; i++) { // maxCost
     if (!kSP.empty()){
@@ -484,7 +465,7 @@ void routing() {
       kSP.clear();
     }
     cout << "rounting on " << i << " cost\n";
-    last = getHPath(i, last);
+    last = getHPath(i, last, K);
     // yenKSP(0, numQn - 1, minCost * 10, i);
     // 不能限制 k
     // 剛好是指定長度，可能會漏，但我猜應該只要多找一點在砍掉就可以了，另外注意
