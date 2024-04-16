@@ -223,6 +223,8 @@ void preKsp(int minHop, int maxHop, int targetN){
   // 當前路徑期望值是 curH，如果有 curK 個 curH 長的序列就可以用那 curK 個開始偏離
   
   for (int k = 1; cnt < targetN && !overSize; k++) { 
+    // cut 
+    if(A[k-1].size() < curH) continue;
     for (size_t i = 0; i < A[k - 1].size() - 1 && cnt < targetN && !overSize; ++i) { // !overSize
       // store origin statue (canUse)
       vector<Node> qNodeBackup = qNode;
@@ -245,14 +247,15 @@ void preKsp(int minHop, int maxHop, int targetN){
         totalPath.insert(totalPath.end(), spurPath.begin() + 1,
                          spurPath.end()); // prevent add multiple spurNode
 
-        // if(totalPath.size() == curH){
-        //   curK++;
-        // }
-        // if(totalPath.size() > curH+1){
-        //   curH++;
-        //   curK=0;
-        // }
-        
+        // cut
+        if(totalPath.size() == curH){
+          curK++;
+        }
+        if(totalPath.size() > curH+1){
+          curH++;
+          curK=0;
+        }
+
         if(totalPath.size() > maxHop+1) overSize = 1; 
         if(totalPath.size() == maxHop) cnt++;
         if(cnt > targetN){
@@ -260,6 +263,7 @@ void preKsp(int minHop, int maxHop, int targetN){
           cout << "get targetN\n";
         }
         cout << "total path size = " << totalPath.size() << '\n';
+        cout << "curK " << curK << " curH " << curH << '\n';
         try {
           // if(totalPath.size() >= curH)
           B.push(totalPath);
@@ -267,16 +271,19 @@ void preKsp(int minHop, int maxHop, int targetN){
           std::cerr << "Allocation failed: " << e.what() << '\n';
           assert(0);
         }
-        // cut edge
-        // if(curK == targetN*2){
-        //   curK = 0;
-        //   curH ++;
-        //   break;
-        // } 
+        
       }
 
       // recover
       qNode = qNodeBackup;
+      
+      // cut edge
+      // if(curK == targetN*2){
+      //   cout << "curK = " << curK << " == target " << targetN << '\n';
+      //   curK = 0;
+      //   curH ++;
+      //   break;
+      // } 
     }
 
     if (B.empty())
