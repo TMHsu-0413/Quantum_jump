@@ -41,12 +41,12 @@ public:
     neighbor.push_back(p);
   }
   // O(N) to find edge and return edgeIdx
-  int findEdge(int u, int v){ 
-    for(int i = 0; i < neighbor.size(); i++){
-      if(neighbor[i].from == u && neighbor[i].to == v)
-        return i;
-    }
-  }
+  // int findEdge(int u, int v){ 
+  //   for(int i = 0; i < neighbor.size(); i++){
+  //     if(neighbor[i].from == u && neighbor[i].to == v)
+  //       return i;
+  //   }
+  // }
 };
 
 class acceptPath {
