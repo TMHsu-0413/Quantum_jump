@@ -170,7 +170,7 @@ pair<double, double> countFB(vector<int> path, vector<int> purTimes) {
       cout << "curP " << qNode[curNode].neighbor[edgeIdx].purProb[purTimes[i]] << '\n';
     }
     if (i > 0) {
-      cur.second *= qNode[i].swappingProb;
+      cur.second *= qNode[curNode].swappingProb;
     }
   }
   return cur;
@@ -516,7 +516,8 @@ void printACP(double time) {
     return;
   }
   if(acPaths.empty()){
-    cout << "no path\n";
+    ofs << "error:no path\n";
+    ofs << "Time:"<<time<<endl;
     return;
   }
   auto x = acPaths[0];
