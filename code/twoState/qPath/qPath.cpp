@@ -422,7 +422,7 @@ void routing() {
       kSP.clear();
     }
     cout << "rounting on " << i << " cost\n";
-    yenKSP(0, numQn - 1, 10, i+1);
+    yenKSP(0, numQn - 1, 10, i);
     printKSP();
     // 不能限制 k
     // 剛好是指定長度，可能會漏，但我猜應該只要多找一點在砍掉就可以了，另外注意
@@ -465,6 +465,7 @@ int main(int argc, char *argv[]) {
   auto diff = end - start;
   double time = chrono::duration<double>(diff).count();
   printACP(time);
+  printALLACP();
   // printPurifiTable();
   printALLACP();
   fclose(stdin);
