@@ -5,8 +5,8 @@ a.exe
 *.txt
 .DS_Store
 
-code/output/*
-plot/image/*
+code/twoState/output/*
+code/twoState/plot/image/*
 
 */a.out
 */a.exe

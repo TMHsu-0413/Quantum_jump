@@ -13,24 +13,22 @@ public:
         buildPurifyTable();
         buildGraph();
         extendDijkstra();
+        string error = "";
         if (path.size() < 2){
-            write_path_info(0.0,"error:no path");
-            return;
+            error = "error:no path";
         }
         bool havePath = purifyDecision();
-        if (!havePath){
-            write_path_info(0.0,"error:edge without enough memory");
-            return;
+        if (!havePath && error.empty()){
+            error = "error:edge without enough memory";
         }
         bool enoughMemory = checkPath();
-        if (!enoughMemory){
-            write_path_info(0.0,"error:exceed memory limit");
-            return;
+        if (!enoughMemory && error.empty()){
+            error = "error:exceed memory limit";
         }
         auto end = chrono::high_resolution_clock::now();
         auto diff = end - start;
         double time = chrono::duration<double>(diff).count();
-        write_path_info(time,"");
+        write_path_info(time,error);
     }
 private:
     int n;
@@ -191,6 +189,7 @@ private:
         }
         if (!error.empty()){
             ofs<<error<<endl;
+            ofs<<"Time:"<<time<<endl;
             return;
         }
         ofs << "Path: ";

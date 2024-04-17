@@ -517,7 +517,8 @@ void printACP(double time) {
     return;
   }
   if(acPaths.empty()){
-    cout << "no path\n";
+    ofs << "error:no path\n";
+    ofs << "Time:"<<time<<endl;
     return;
   }
   auto x = acPaths[0];

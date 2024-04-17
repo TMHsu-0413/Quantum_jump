@@ -34,25 +34,13 @@
 - 進入資料夾
 
 ```bash=
-cd quantum_jump
+cd quantum_jump/code/twoState
 ```
 
-- 使用waxman產隨機圖，alpha設定0.1 - 0.3
+- 一次產出輸入數字節點的資料，可帶多個，固定memory 10-14， prob 0.85-1
 
 ```bash=
-python3 code/twostate/main.py {name.txt} {number of node} {min memory} {max memory} {alpha} {min success prob} {max success prob}
+python script.py {number of nodes} {number of nodes} ...
 ```
 
-- 執行RLBSP，找到最佳解
-
-```bash=
-# 若不暴力找出全部節點的話，要到RLBSP.cpp內把dfs function註解掉
-g++ code/twostate/RLBSP/RLBSP.cpp
-./a.out {name.txt}
-```
-
-- 將找到的點畫成散點圖
-
-```bash=
-python3 plot/graph.py
-```
+- 畫出的圖會在./plot/image內
