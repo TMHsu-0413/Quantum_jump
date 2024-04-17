@@ -170,7 +170,7 @@ pair<double, double> countFB(vector<int> path, vector<int> purTimes) {
       cout << "curP " << qNode[curNode].neighbor[edgeIdx].purProb[purTimes[i]] << '\n';
     }
     if (i > 0) {
-      cur.second *= qNode[i].swappingProb;
+      cur.second *= qNode[path[i]].swappingProb;
     }
   }
   return cur;
@@ -458,6 +458,7 @@ int main(int argc, char *argv[]) {
   input();
   auto start = chrono::high_resolution_clock::now();
   init();
+  printPurifiTable();
   routing();
   sort(acPaths.begin(), acPaths.end());
   auto end = chrono::high_resolution_clock::now();
@@ -560,7 +561,7 @@ void printPurifiTable() {
       cout << "Node " << i << " mem " << qNode[i].mem << '\n';
       cout << "Node " << nxt.to << " mem " << qNode[nxt.to].mem << '\n';
       for (int j = 0; j < nxt.purFidelity.size(); j++) {
-        cout << "pur times = " << j << "\nF = " << nxt.purFidelity[j] << "\n";
+        cout << "pur times = " << j << "\nF = " << nxt.purFidelity[j] << "\nP = " << nxt.purProb[j] << "\n";
       }
     }
     cout << '\n';
