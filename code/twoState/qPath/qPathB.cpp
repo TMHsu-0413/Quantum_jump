@@ -64,10 +64,6 @@ void buildGraph() {
     edgeCnt = 0;
     for (int j = i + 1; j < numQn; j++) {
       edgeIdMap[i][j] = edgeCnt++;
-      // if(j != i+1){
-      //   qNode[i].memUsed++; // use to swap
-      //   qNode[j].memUsed++; // use to swap
-      // }
       double curProb = entangle_success_prob(disTable[{i, j}]);
       double enProb = curProb;
       double curFidelity = entangle_fidelity(disTable[{i, j}], BETA); // define
