@@ -171,8 +171,13 @@ int purifyDicision(
     vector<int> &path, vector<int> &purTimes,
     priority_queue<pair<double, int>, vector<pair<double, int>>> &purDicision) {
   int edgeChoose = -1;
+  // priority_queue<pair<double, int>, vector<pair<double, int>>>pq2 = purDicision;
+  // cout << "print queue ";
+  // while(!pq2.empty()) cout<<pq2.top().first<<' ', pq2.pop();
+  // cout << '\n';
   while (!purDicision.empty()) {
     edgeChoose = purDicision.top().second;
+    double diff = purDicision.top().first;
     purDicision.pop();
     int curNode = path[edgeChoose];
     int nextNode = path[edgeChoose + 1];
@@ -184,6 +189,12 @@ int purifyDicision(
 
     if (curNodeMemUsed <= qNode[curNode].mem &&
         nextNodeMemUsed <= qNode[nextNode].mem) {
+      // cout << "chose " << curNode << " to " << nextNode<<'\n';
+      // cout << "diff " << diff << '\n';
+      // for(int i=0; i<numQn; i++){
+      //   cout << (qNode[i].neighbor[edgeIdMap[i][i+1]].purFidelity[purTimes[i]+1])-(qNode[i].neighbor[edgeIdMap[i][i+1]].purFidelity[purTimes[i]]) << ' ';
+      // }
+      // cout << '\n';
       return edgeChoose; // && purTimes[edgeChoose] < edgePurF.size() - 1
     }
   }
@@ -191,10 +202,12 @@ int purifyDicision(
 }
 void updEdgeCost() {
   // 如果 path Fidelity 沒過，就不斷找 purify 後 F 差異最大的進行 purify。
+  
   for (int i = 0; i < kSP.size(); i++) {
     vector<int> path = kSP[i];
     vector<int> purTimes(path.size() + 1, 0);
     auto tmp = countFB(path, purTimes);
+    // cout << "path F = " << tmp.first << '\n';
     double curF = tmp.first, curP = tmp.second;
     priority_queue<pair<double, int>, vector<pair<double, int>>> purDicision;
     // add swap mem used
@@ -232,26 +245,28 @@ void updEdgeCost() {
         auto res = countFB(path, purTimes);
         curF = res.first;
         curP = res.second;
+        // cout << "res: " << curF << " " << curP << '\n';
       }
+      while(!purDicision.empty()) purDicision.pop();
     }
     printPath(path);
-    cout << "puriTimes ";
-    for (auto x : purTimes) {
-      cout << x << " ";
-    }
-    cout << '\n';
-    cout << "curF " << curF << '\n';
-    cout << "curP " << curP << '\n';
-    cout << "mem used ";
-    for (auto x : path) {
-      cout << qNode[x].memUsed << ' ';
-    }
-    cout << '\n';
-    cout << "mem limit ";
-    for (auto x : path) {
-      cout << qNode[x].mem << ' ';
-    }
-    cout << '\n';
+    // cout << "puriTimes ";
+    // for (auto x : purTimes) {
+    //   cout << x << " ";
+    // }
+    // cout << '\n';
+    // cout << "curF " << curF << '\n';
+    // cout << "curP " << curP << '\n';
+    // cout << "mem used ";
+    // for (auto x : path) {
+    //   cout << qNode[x].memUsed << ' ';
+    // }
+    // cout << '\n';
+    // cout << "mem limit ";
+    // for (auto x : path) {
+    //   cout << qNode[x].mem << ' ';
+    // }
+    // cout << '\n';
     resetMemUsed();
     if (curF >= threshold && !pathFailed) {
       acPaths.push_back({curF, curP, kSP[i], purTimes});
@@ -280,6 +295,23 @@ void input() {
     qNode.push_back({i, inputX, inputY, inputMem, inputSwProb});
   }
 }
+void debug(){
+  vector<int>path, PT, PT2;
+  for(int i=0; i<numQn; i++) path.push_back(i);
+  PT.push_back(4);
+  PT.push_back(2);
+  PT.push_back(2);
+  PT.push_back(1);
+  PT2.push_back(4);
+  PT2.push_back(2);
+  PT2.push_back(1);
+  PT2.push_back(2);
+  auto res = countFB(path, PT);
+  auto res2 = countFB(path, PT2);
+  cout << "\n\nDEBUG";
+  cout << res.first << ' ' << res.second << '\n';
+  cout << res2.first << ' ' << res2.second << '\n';
+}
 int main(int argc, char *argv[]) {
   if (freopen(argv[1], "r", stdin) == nullptr) {
     cout << argv[1] << " File Open Error" << '\n';
@@ -293,7 +325,6 @@ int main(int argc, char *argv[]) {
   input();
   auto start = chrono::high_resolution_clock::now();
   init();
-  printPurifiTable();
   routing();
   sort(acPaths.begin(), acPaths.end());
   auto end = chrono::high_resolution_clock::now();
@@ -302,7 +333,6 @@ int main(int argc, char *argv[]) {
   printACP(time);
   printALLACP();
   // printPurifiTable();
-  printALLACP();
   fclose(stdin);
 }
 void printPath(vector<int> &path) {
