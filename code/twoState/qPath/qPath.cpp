@@ -26,7 +26,7 @@ void printKSP();
 void printPath(vector<int> &path);
 void printACP(double time);
 void printPurifiTable();
-int findEdge(int a, int b){
+int findEdge(int a, int b) {
   // if(edgeIdMap[a][b] != qNode[a].findEdge(a, b)){
   //   cout << "wrong table edge " << a << ' ' << b << '\n';
   //   cout << edgeIdMap[a][b] << ' ' << qNode[a].findEdge(a, b);
@@ -66,7 +66,7 @@ void buildGraph() {
     prb.push_back(curProb);
     qNode[i].addNeighbor(
         {edgeIdx, i, j, curProb, curFidelity, fi,
-          prb}); // 只是紀錄可以連，實際上沒有 entangle，所以 memUsed = 0
+         prb}); // 只是紀錄可以連，實際上沒有 entangle，所以 memUsed = 0
 
     // 計算多次 purification 的 fidelity, probability
     double maxF = 0;
@@ -75,7 +75,7 @@ void buildGraph() {
     tmpPurPrb.push_back(curProb);
     double tmpF = curFidelity, tmpP = curProb;
     for (int purMem = 1; purMem <= qNode[i].mem && purMem <= qNode[j].mem;
-          purMem++) {
+         purMem++) {
       double purP = purify_success_prob(tmpF, enFidelity) * enProb * tmpP;
       double purF = purify_fidelity(tmpF, enFidelity);
       tmpPurFi.push_back(purF);
@@ -103,12 +103,13 @@ void resetMemUsed() {
   //   }
   // }
 }
-bool checkMem(int curNode, int nextNode){
+bool checkMem(int curNode, int nextNode) {
   if (qNode[curNode].memUsed > qNode[curNode].mem ||
-    qNode[nextNode].memUsed > qNode[nextNode].mem) {
+      qNode[nextNode].memUsed > qNode[nextNode].mem) {
     std::cout << "mem overflow " << qNode[curNode].memUsed << " "
-         << qNode[nextNode].memUsed << '\n';
-    std::cout << "mem i = " << qNode[curNode].mem << " j = " << qNode[nextNode].mem << '\n';
+              << qNode[nextNode].memUsed << '\n';
+    std::cout << "mem i = " << qNode[curNode].mem
+              << " j = " << qNode[nextNode].mem << '\n';
     resetMemUsed();
     return 0;
   }
@@ -123,7 +124,7 @@ pair<double, double> countFB(vector<int> path, vector<int> purTimes) {
     int nextNode = path[i + 1];
     int edgeIdx = findEdge(curNode, nextNode);
 
-    if(!checkMem(curNode, nextNode)){
+    if (!checkMem(curNode, nextNode)) {
       memOverFlow = 1;
       return {0, 0};
     }
@@ -142,18 +143,22 @@ pair<double, double> countFB(vector<int> path, vector<int> purTimes) {
 
     cur.first *= qNode[curNode].neighbor[edgeIdx].purFidelity[purTimes[i]];
     cur.second *= qNode[curNode].neighbor[edgeIdx].purProb[purTimes[i]];
-    if(cur.first == 0 && cur.second == 0){
+    if (cur.first == 0 && cur.second == 0) {
       cout << "path ";
-      for(auto x : path){
+      for (auto x : path) {
         cout << x << " ";
-      } cout << '\n';
+      }
+      cout << '\n';
       cout << "purTimes ";
-      for(auto x : purTimes){
+      for (auto x : purTimes) {
         cout << x << " ";
-      } cout << '\n';
+      }
+      cout << '\n';
       cout << "edgeIdx " << edgeIdx << '\n';
-      cout << "curF " << qNode[curNode].neighbor[edgeIdx].purFidelity[purTimes[i]] << '\n';
-      cout << "curP " << qNode[curNode].neighbor[edgeIdx].purProb[purTimes[i]] << '\n';
+      cout << "curF "
+           << qNode[curNode].neighbor[edgeIdx].purFidelity[purTimes[i]] << '\n';
+      cout << "curP " << qNode[curNode].neighbor[edgeIdx].purProb[purTimes[i]]
+           << '\n';
     }
     if (i > 0) {
       cur.second *= qNode[path[i]].swappingProb;
@@ -174,7 +179,7 @@ int purifyDicision(
     int edgeIdx = findEdge(curNode, nextNode);
     vector<double> edgePurF = qNode[curNode].neighbor[edgeIdx].purFidelity;
 
-    int curNodeMemUsed = 1 + qNode[curNode].memUsed; //purTimes[edgeChoose]
+    int curNodeMemUsed = 1 + qNode[curNode].memUsed; // purTimes[edgeChoose]
     int nextNodeMemUsed = 1 + qNode[nextNode].memUsed;
 
     if (curNodeMemUsed <= qNode[curNode].mem &&
@@ -193,9 +198,9 @@ void updEdgeCost() {
     double curF = tmp.first, curP = tmp.second;
     priority_queue<pair<double, int>, vector<pair<double, int>>> purDicision;
     // add swap mem used
-    for (int i = 0; i<path.size() - 1; i++) {
+    for (int i = 0; i < path.size() - 1; i++) {
       qNode[path[i]].memUsed++;
-      qNode[path[i+1]].memUsed++;
+      qNode[path[i + 1]].memUsed++;
     }
     bool pathFailed = 0;
     while (curF < threshold && curF) {
@@ -211,17 +216,15 @@ void updEdgeCost() {
         }
       }
       // update fidelity, prb
-      int edgeChoose =
-          purifyDicision(path, purTimes, purDicision); 
+      int edgeChoose = purifyDicision(path, purTimes, purDicision);
       // cout << "edge choose " << edgeChoose << '\n';
-      if (edgeChoose < 0 || edgeChoose > path.size()-1) {
+      if (edgeChoose < 0 || edgeChoose > path.size() - 1) {
         pathFailed = 1;
         break;
       } else {
         // debug
-        if(!checkMem(path[edgeChoose], path[edgeChoose + 1])){
+        if (!checkMem(path[edgeChoose], path[edgeChoose + 1])) {
           cout << "wrong choose out of mem\n";
-          
         }
         purTimes[edgeChoose]++;
         qNode[path[edgeChoose]].memUsed++;
@@ -232,11 +235,23 @@ void updEdgeCost() {
       }
     }
     printPath(path);
-    cout << "puriTimes "; for(auto x : purTimes){ cout << x << " "; } cout << '\n';
+    cout << "puriTimes ";
+    for (auto x : purTimes) {
+      cout << x << " ";
+    }
+    cout << '\n';
     cout << "curF " << curF << '\n';
     cout << "curP " << curP << '\n';
-    cout << "mem used "; for(auto x : path){ cout << qNode[x].memUsed << ' '; } cout << '\n';
-    cout << "mem limit "; for(auto x : path){ cout << qNode[x].mem << ' '; } cout << '\n';
+    cout << "mem used ";
+    for (auto x : path) {
+      cout << qNode[x].memUsed << ' ';
+    }
+    cout << '\n';
+    cout << "mem limit ";
+    for (auto x : path) {
+      cout << qNode[x].mem << ' ';
+    }
+    cout << '\n';
     resetMemUsed();
     if (curF >= threshold && !pathFailed) {
       acPaths.push_back({curF, curP, kSP[i], purTimes});
@@ -269,7 +284,7 @@ int main(int argc, char *argv[]) {
   if (freopen(argv[1], "r", stdin) == nullptr) {
     cout << argv[1] << " File Open Error" << '\n';
   }
-  if (argc < 3){
+  if (argc < 3) {
     cout << "need threshold\n";
     return 0;
   }
@@ -337,9 +352,9 @@ void printACP(double time) {
     cout << "error to open output.txt" << endl;
     return;
   }
-  if(acPaths.empty()){
+  if (acPaths.empty()) {
     ofs << "error:no path\n";
-    ofs << "Time:"<<time<<endl;
+    ofs << "Time:" << time << endl;
     return;
   }
   auto x = acPaths[0];
@@ -383,7 +398,8 @@ void printPurifiTable() {
       cout << "Node " << i << " mem " << qNode[i].mem << '\n';
       cout << "Node " << nxt.to << " mem " << qNode[nxt.to].mem << '\n';
       for (int j = 0; j < nxt.purFidelity.size(); j++) {
-        cout << "pur times = " << j << "\nF = " << nxt.purFidelity[j] << "\nP = " << nxt.purProb[j] << "\n";
+        cout << "pur times = " << j << "\nF = " << nxt.purFidelity[j]
+             << "\nP = " << nxt.purProb[j] << "\n";
       }
     }
     cout << '\n';
