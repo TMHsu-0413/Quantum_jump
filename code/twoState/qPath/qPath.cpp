@@ -48,57 +48,62 @@ void buildDisTable() {
   for (int i = 0; i < numQn - 1; i++) {
     disTable[make_pair(i, i + 1)] = distence(qNode[i], qNode[i + 1]);
   }
-  for (int i = 0; i < numQn - 2; i++) {
-    for (int j = i + 2; j < numQn; j++) {
-      double tmpDis = 0;
-      for (int k = i; k < j; k++) {
-        tmpDis += disTable[{k, k + 1}];
-      }
-      disTable[make_pair(i, j)] = tmpDis;
-    }
-  }
+
+  // ByPass part
+  // for (int i = 0; i < numQn - 2; i++) {
+  //   for (int j = i + 2; j < numQn; j++) {
+  //     double tmpDis = 0;
+  //     for (int k = i; k < j; k++) {
+  //       tmpDis += disTable[{k, k + 1}];
+  //     }
+  //     disTable[make_pair(i, j)] = tmpDis;
+  //   }
+  // }
 }
 void buildGraph() {
   int edgeCnt = 0;
   for (int i = 0; i < numQn; i++) {
     edgeCnt = 0;
-    for (int j = i + 1; j < numQn; j++) {
-      edgeIdMap[i][j] = edgeCnt++;
-      double curProb = entangle_success_prob(disTable[{i, j}]);
-      double enProb = curProb;
-      double curFidelity = entangle_fidelity(disTable[{i, j}], BETA); // define
-      double enFidelity = curFidelity;
-      int edgeIdx = qNode[i].neighbor.size();
-      int edgeIdx2 = qNode[j].neighbor.size();
-      vector<double> fi, prb;
-      fi.push_back(curFidelity);
-      prb.push_back(curProb);
-      qNode[i].addNeighbor(
-          {edgeIdx, i, j, curProb, curFidelity, fi,
-           prb}); // 只是紀錄可以連，實際上沒有 entangle，所以 memUsed = 0
+    int j = i+1;
+    edgeIdMap[i][j] = edgeCnt++;
+    // if(j != i+1){
+    //   qNode[i].memUsed++; // use to swap
+    //   qNode[j].memUsed++; // use to swap
+    // }
+    double curProb = entangle_success_prob(disTable[{i, j}]);
+    double enProb = curProb;
+    double curFidelity = entangle_fidelity(disTable[{i, j}], BETA); // define
+    double enFidelity = curFidelity;
+    int edgeIdx = qNode[i].neighbor.size();
+    int edgeIdx2 = qNode[j].neighbor.size();
+    vector<double> fi, prb;
+    fi.push_back(curFidelity);
+    prb.push_back(curProb);
+    qNode[i].addNeighbor(
+        {edgeIdx, i, j, curProb, curFidelity, fi,
+          prb}); // 只是紀錄可以連，實際上沒有 entangle，所以 memUsed = 0
 
-      // 計算多次 purification 的 fidelity, probability
-      double maxF = 0;
-      vector<double> tmpPurFi, tmpPurPrb;
-      tmpPurFi.push_back(curFidelity);
-      tmpPurPrb.push_back(curProb);
-      double tmpF = curFidelity, tmpP = curProb;
-      for (int purMem = 1; purMem <= qNode[i].mem && purMem <= qNode[j].mem;
-           purMem++) {
-        double purP = purify_success_prob(tmpF, enFidelity) * enProb * tmpP;
-        double purF = purify_fidelity(tmpF, enFidelity);
-        tmpPurFi.push_back(purF);
-        tmpPurPrb.push_back(purP);
-        maxF = max(maxF, purF);
-        tmpF = purF; // update fidelity
-        tmpP = purP; // update probability
-      }
-      // Delete all edges(u,v) from G, if Fpur max(u,v)<Fth;
-      if (maxF >= threshold) {
-        // add path
-        qNode[i].neighbor[edgeIdx].purFidelity = tmpPurFi;
-        qNode[i].neighbor[edgeIdx].purProb = tmpPurPrb;
-      }
+    // 計算多次 purification 的 fidelity, probability
+    double maxF = 0;
+    vector<double> tmpPurFi, tmpPurPrb;
+    tmpPurFi.push_back(curFidelity);
+    tmpPurPrb.push_back(curProb);
+    double tmpF = curFidelity, tmpP = curProb;
+    for (int purMem = 1; purMem <= qNode[i].mem && purMem <= qNode[j].mem;
+          purMem++) {
+      double purP = purify_success_prob(tmpF, enFidelity) * enProb * tmpP;
+      double purF = purify_fidelity(tmpF, enFidelity);
+      tmpPurFi.push_back(purF);
+      tmpPurPrb.push_back(purP);
+      maxF = max(maxF, purF);
+      tmpF = purF; // update fidelity
+      tmpP = purP; // update probability
+    }
+    // Delete all edges(u,v) from G, if Fpur max(u,v)<Fth;
+    if (maxF >= threshold) {
+      // add path
+      qNode[i].neighbor[edgeIdx].purFidelity = tmpPurFi;
+      qNode[i].neighbor[edgeIdx].purProb = tmpPurPrb;
     }
   }
   // printPurifiTable();
@@ -170,6 +175,160 @@ pair<double, double> countFB(vector<int> path, vector<int> purTimes) {
     }
   }
   return cur;
+}
+vector<int> dijkstra(int src, int dest) {
+  vector<double> maxFidelity(qNode.size(), 0.0);
+  vector<int> parent(qNode.size(), -1);
+  priority_queue<pair<double, int>, vector<pair<double, int>>> pq;
+
+  pq.push({1, src});
+
+  while (!pq.empty()) {
+    auto [curF, curNode] = pq.top();
+    pq.pop();
+
+    if (curNode == dest) {
+      break;
+    }
+
+    for (auto &edge : qNode[curNode].neighbor) {
+      if (edge.canUse) {
+        double newFidelity = curF * edge.fidelity;
+        if (newFidelity > maxFidelity[edge.to]) {
+          maxFidelity[edge.to] = newFidelity;
+          parent[edge.to] = curNode;
+          pq.push({newFidelity, edge.to});
+        }
+      }
+    }
+  }
+
+  vector<int> path;
+  for (int at = dest; at != -1; at = parent[at]) {
+    path.push_back(at);
+  }
+  reverse(path.begin(), path.end());
+  if (!path.empty() && path[0] == src) {
+    return path;
+  }
+
+  return {};
+}
+// return shortest path with fidelity
+vector<int> bfsSP(int s, int d) {
+  // return shortest path with s->d
+  queue<int> que;
+  vector<bool> vis(numQn, 0);
+  vector<int> par(numQn, -1);
+  vector<int> ret;
+  que.push(s);
+  int cur;
+  while (!que.empty()) {
+    cur = que.front();
+    que.pop();
+    if (cur == d) {
+      break;
+    }
+    for (auto it = qNode[cur].neighbor.begin(); it != qNode[cur].neighbor.end();
+         it++) {
+      if (!vis[it->to] && it->canUse == 1) {
+        vis[it->to] = 1;
+        par[it->to] = cur;
+        que.push(it->to);
+      }
+    }
+  }
+  if (cur != d)
+    return {};
+  while (cur != s) {
+    ret.push_back(cur);
+    cur = par[cur];
+  }
+  ret.push_back(s);
+  reverse(ret.begin(), ret.end());
+  return ret;
+}
+
+void yenKSP(int src, int dest, int K, int H) {
+  vector<vector<int>> A; // KSP set
+  priority_queue<vector<int>, vector<vector<int>>, CompareVector> B;
+
+  vector<int> initialPath = dijkstra(src, dest);
+
+  if (initialPath.empty()) {
+    return;
+  }
+
+  A.push_back(initialPath);
+  
+
+  bool overSize = 0;
+  int cnt = 0;
+
+  for (int k = 1; cnt < K && !overSize; k++) { // k < K*2 &&
+    for (size_t i = 0; i < A[k - 1].size() - 1 && cnt < K && !overSize; ++i) { // !overSize
+      // store origin statue (canUse)
+      vector<Node> qNodeBackup = qNode;
+      int spurNode = A[k - 1][i];
+      vector<int> rootPath(A[k - 1].begin(), A[k - 1].begin() + i + 1);
+
+      for (auto &path : A) {
+        if (rootPath.size() < path.size() &&
+            equal(rootPath.begin(), rootPath.end(), path.begin())) {
+          int edgeIdx = findEdge(path[i], path[i + 1]);
+          qNode[path[i]].neighbor[edgeIdx].canUse = 0;
+        }
+      }
+
+      vector<int> spurPath = dijkstra(spurNode, dest);
+      if (!spurPath.empty()) {
+        vector<int> totalPath = rootPath;
+        
+        totalPath.insert(totalPath.end(), spurPath.begin() + 1,
+                         spurPath.end()); // prevent add multiple spurNode
+        if(totalPath.size() == H+1) cnt++; // dangerous
+        if(totalPath.size() > H+1){
+          cout << "total size " << totalPath.size() << " H " << H << '\n';
+          overSize = 1; 
+        } 
+        try {
+          B.push(totalPath);
+        } catch (const std::bad_alloc& e) {
+          std::cerr << "Allocation failed: " << e.what() << '\n';
+          assert(0);
+        }
+        
+      }
+
+      // recover
+      qNode = qNodeBackup;
+    }
+
+    if (B.empty())
+      break;
+    try {
+      A.push_back(B.top());
+    } catch (const std::bad_alloc& e) {
+        std::cerr << "Allocation failed: " << e.what() << '\n';
+        assert(0);
+    }
+    
+    B.pop();
+  }
+  // cout << "A\n";
+  // for(auto x: A){
+  //   printPath(x);
+  // }
+  // cut
+  int cntK = 0;
+  vector<vector<int>> tmp;
+  for (int i = 0; i < A.size() && cntK < K; i++) {
+    if (A[i].size() == H && cntK < K) {
+      tmp.push_back(A[i]);
+      cntK++;
+    }
+  }
+  kSP = tmp;
 }
 
 int purifyDicision(
@@ -255,24 +414,32 @@ void updEdgeCost() {
 }
 
 void routing() {
-  minCost = bfsSP(0, numQn - 1).size();
-  maxCost = numQn + 1;
-  for (int i = minCost; i < maxCost; i++) { // maxCost
-    if (!kSP.empty()){
-      for(int i=0; i<kSP.size(); i++)
-        kSP[i].clear();
-      kSP.clear();
-    }
-    cout << "rounting on " << i << " cost\n";
-    yenKSP(0, numQn - 1, 10, i);
-    printKSP();
-    // 不能限制 k
-    // 剛好是指定長度，可能會漏，但我猜應該只要多找一點在砍掉就可以了，另外注意
-    // i 是 node 數量不是 hop 數    
-    updEdgeCost();
-    resetMemUsed();
-    
+  // minCost = bfsSP(0, numQn - 1).size();
+  // maxCost = numQn + 1;
+  
+  vector<int>tmp;
+  for(int i=0; i<numQn; i++){
+    tmp.push_back(i);
   }
+  kSP.push_back(tmp);
+  updEdgeCost();
+
+  // for (int i = minCost; i < maxCost; i++) { // maxCost
+  //   if (!kSP.empty()){
+  //     for(int i=0; i<kSP.size(); i++)
+  //       kSP[i].clear();
+  //     kSP.clear();
+  //   }
+  //   cout << "rounting on " << i << " cost\n";
+  //   yenKSP(0, numQn - 1, 10, i);
+  //   printKSP();
+  //   // 不能限制 k
+  //   // 剛好是指定長度，可能會漏，但我猜應該只要多找一點在砍掉就可以了，另外注意
+  //   // i 是 node 數量不是 hop 數    
+  //   updEdgeCost();
+  //   resetMemUsed();
+    
+  // }
 }
 void init() {
   buildDisTable();
@@ -300,6 +467,8 @@ int main(int argc, char *argv[]) {
   input();
   auto start = chrono::high_resolution_clock::now();
   init();
+  printGraph();
+  printDisTable();
   printPurifiTable();
   routing();
   sort(acPaths.begin(), acPaths.end());
@@ -308,8 +477,8 @@ int main(int argc, char *argv[]) {
   double time = chrono::duration<double>(diff).count();
   printACP(time);
   printALLACP();
+  
   // printPurifiTable();
-  printALLACP();
   fclose(stdin);
 }
 void printPath(vector<int> &path) {
@@ -354,7 +523,7 @@ void printKSP() {
 }
 void printACP(double time) {
   ofstream ofs;
-  ofs.open("output/qPath.txt");
+  ofs.open("output/qPathNB.txt");
   if (!ofs.is_open()) {
     cout << "error to open output.txt" << endl;
     return;
