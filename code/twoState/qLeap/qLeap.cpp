@@ -120,32 +120,37 @@ private:
         return;
     }
     void extendDijkstra(){
-        priority_queue<pqLabel> pq;
-        pq.push({1,1,s,-1});
-        vector<bool> used(n);
-        vector<double> parent(n,-1);
-        while(!pq.empty()){
-            pqLabel temp = pq.top(); pq.pop();
-            double curFidelity = temp.fidelity, curProb = temp.probability;
-            int node = temp.node, p = temp.parent;
-            if (used[node])
-                continue;
-            used[node] = true;
-            parent[node] = p;
-            
-            for(auto &nxt:g[node]){
-                if (used[nxt])
-                    continue;
-                //  若走到非終點，需做swapping，所以memory至少要>=2
-                else if (nxt != d && memory[nxt] < 2)
-                    continue;
-                pq.push({curFidelity * purifyTable[node][nxt][0].fidelity, curProb * purifyTable[node][nxt][0].prob, nxt, node});
-            }
+
+        for(int i=0; i<n; i++){
+            path.push_back(i);
         }
-        if (!used[d])
-            return;
-        getPath(parent,d);
-        purifyTime.resize(path.size()-1,0);
+
+        // priority_queue<pqLabel> pq;
+        // pq.push({1,1,s,-1});
+        // vector<bool> used(n);
+        // vector<double> parent(n,-1);
+        // while(!pq.empty()){
+        //     pqLabel temp = pq.top(); pq.pop();
+        //     double curFidelity = temp.fidelity, curProb = temp.probability;
+        //     int node = temp.node, p = temp.parent;
+        //     if (used[node])
+        //         continue;
+        //     used[node] = true;
+        //     parent[node] = p;
+            
+        //     for(auto &nxt:g[node]){
+        //         if (used[nxt])
+        //             continue;
+        //         //  若走到非終點，需做swapping，所以memory至少要>=2
+        //         else if (nxt != d && memory[nxt] < 2)
+        //             continue;
+        //         pq.push({curFidelity * purifyTable[node][nxt][0].fidelity, curProb * purifyTable[node][nxt][0].prob, nxt, node});
+        //     }
+        // }
+        // if (!used[d])
+        //     return;
+        // getPath(parent,d);
+        // purifyTime.resize(path.size()-1,0);
     }
 
     bool purifyDecision(){
