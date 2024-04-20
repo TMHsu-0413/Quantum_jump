@@ -48,14 +48,14 @@ def print_etodn(rLbsp,qPath,qLeap,node_num):
         qLeapTime.append(qLeap["Time"][el][0])
     graph.execution_time_on_different_node([rLbspTime, qPathTime, qLeapTime], node_num)
 
-def print_rate(node_num,runTime,threshold):
+def print_average_in_different_nodes(node_num,runTime,threshold):
     ans = [[] for _ in range(3)]
     for node in node_num:
         rLbspTime,qPathTime,qLeapTime = 0,0,0
         for _ in range(runTime):
             subprocess.run(
             [
-                "python",
+                "python3",
                 "main.py",
                 "graph.txt",
                 str(node),
@@ -65,23 +65,48 @@ def print_rate(node_num,runTime,threshold):
                 "0.85",
                 "1",
             ])
-            print("new graph")
             compile_and_run("graph.txt",threshold)
             rLbspTime += validAnswer("RLBSP")
             qPathTime += validAnswer("qPath")
             qLeapTime += validAnswer("qLeap")
         
-        ans[0].append(rLbspTime / runTime)
-        ans[1].append(qPathTime / runTime)
-        ans[2].append(qLeapTime / runTime)
+        ans[0].append((rLbspTime / runTime) * 100)
+        ans[1].append((qPathTime / runTime) * 100)
+        ans[2].append((qLeapTime / runTime) * 100)
     
-    graph.find_answer_rate(ans,node_num)
+    graph.find_answer_rate(ans,node_num,threshold)
 
+def print_answer_in_different_memory(mem,runTime,node,th):
+    ans = [[] for _ in range(3)]
+    for [mn,mx] in mem:
+        rLbspTime,qPathTime,qLeapTime = 0,0,0
+        for _ in range(runTime):
+            subprocess.run(
+            [
+                "python3",
+                "main.py",
+                "graph.txt",
+                str(node),
+                str(mn),
+                str(mx),
+                "0.4",
+                "0.85",
+                "1",
+            ])
+            compile_and_run("graph.txt", th)
 
+            rLbspTime += validAnswer("RLBSP")
+            qPathTime += validAnswer("qPath")
+            qLeapTime += validAnswer("qLeap")
+        
+        ans[0].append((rLbspTime / runTime) * 100)
+        ans[1].append((qPathTime / runTime) * 100)
+        ans[2].append((qLeapTime / runTime) * 100)
+    graph.find_diff_memory(ans,mem,node,th)
+        
 
 if __name__ == "__main__":
     import sys
-    print_rate([3,5],10,0.8)
     if len(sys.argv) < 2:
         print("Usage: python3 script.py <number of node> <number of node> ...")
         sys.exit(1)
@@ -95,7 +120,7 @@ if __name__ == "__main__":
 
         subprocess.run(
             [
-                "python",
+                "python3",
                 "main.py",
                 "graph.txt",
                 number_of_nodes,
@@ -136,5 +161,10 @@ if __name__ == "__main__":
             threshold,
         )
 
-    print_etodn(rLbsp,qPath,qLeap,node_num)
+    average_time = 50
+    average_th = 0.8
+    average_node = 30
 
+    print_etodn(rLbsp,qPath,qLeap,node_num)
+    print_average_in_different_nodes([30,50],average_time,average_th)
+    print_answer_in_different_memory([[5,9],[10,14],[15,20]],average_time,average_node,average_th)

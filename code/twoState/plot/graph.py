@@ -106,7 +106,7 @@ def execution_time_on_different_node(time,n):
     plt.savefig(f"plot/image/time_on_different_nodes.png")
     plt.close()
 
-def find_answer_rate(time,n):
+def find_answer_rate(time,n,th):
     name = ["Ours", "Q-Path", "Q-Leap"]
 
     for i in range(len(time)):
@@ -125,7 +125,35 @@ def find_answer_rate(time,n):
     plt.ylabel("%")
     plt.title("Different nodes")
     plt.legend(loc="upper right")
-    plt.savefig(f"plot/image/answer_rate.png")
+    plt.savefig(f"plot/image/find_rate_{th}threshold.png")
+    plt.close()
+
+def find_diff_memory(ans,mem,node,th):
+    name = ["Ours", "Q-Path", "Q-Leap"]
+    xsticks = []
+    for i in range(len(mem)):
+        new_arr = []
+        for j in range(2):
+            new_arr.append(str(mem[i][j]))
+        xsticks.append('-'.join(new_arr))
+
+    for i in range(len(ans)):
+        plt.plot(xsticks, ans[i], color="black")
+        plt.plot(
+            xsticks,
+            ans[i],
+            marker=marker[i],
+            color=color[i],
+            markerfacecolor="none",
+            label=name[i],
+        )
+
+    plt.xticks(xsticks)
+    plt.xlabel("the number of memorys")
+    plt.ylabel("%")
+    plt.title("Different memory")
+    plt.legend(loc="upper right")
+    plt.savefig(f"plot/image/find_rate_{th}threshold_{node}nodes.png")
     plt.close()
 
 # 某個8個節點 memory 10-14的case，0代表找不到`

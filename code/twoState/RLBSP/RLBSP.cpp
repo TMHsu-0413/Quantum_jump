@@ -159,8 +159,7 @@ protected:
 
     for (int i = 0; i < n; i++) {
       in >> x[i] >> y[i] >> memory[i] >> swapping_prob[i];
-      cout << "Node " << i << " memory : " << memory[i]
-           << " swappingSuccessProb : " << swapping_prob[i] << endl;
+      //cout << "Node " << i << " memory : " << memory[i] << " swappingSuccessProb : " << swapping_prob[i] << endl;
     }
 
     in.close();
@@ -172,8 +171,7 @@ protected:
     for (int i = 0; i < n - 1; i++) {
       for (int j = i + 1; j < n; j++) {
         // 若 2 點距離超過 fiber distance，不建邊
-        cout << "i :" << i << " j : " << j << " dis : " << dis[j] - dis[i]
-             << endl;
+        //cout << "i :" << i << " j : " << j << " dis : " << dis[j] - dis[i] << endl;
         // if ((dis[j] - dis[i]) > fiber_distance) break;
 
         // iMemory, iM: memory node i already used
@@ -261,8 +259,8 @@ protected:
   void dfs(unordered_map<Node *, bool> &used, Node *cur, Node *d, double c1,
            double c2, vector<Node *> &v) {
     if (cur == d) {
-       cout << "Fidelity : " << exp(-c1) << " " << "Probability : " << exp(-c2) << endl; 
-       printPath(v);
+       //cout << "Fidelity : " << exp(-c1) << " " << "Probability : " << exp(-c2) << endl; 
+       //printPath(v);
       //  dfsAns.push_back({exp(-c1), exp(-c2)});
       dfsAns.push_back({c1, c2});
       return;
@@ -473,10 +471,10 @@ protected:
 
       if (cur == d) {
         if (slope >= lastratio) {
-          cout << "\nfidelity : " << exp(-d1) << " prob : " << exp(-d2) << endl;
+          //cout << "\nfidelity : " << exp(-d1) << " prob : " << exp(-d2) << endl;
           RLBSPAns.push_back({d1, d2});
           // RLBSPAns.push_back({exp(-d1), exp(-d2)});
-          printPath(Cpath);
+          //printPath(Cpath);
           lastratio = slope;
         }
         Cpath.clear();
@@ -560,7 +558,7 @@ protected:
         }
       }
     }
-    cout << "\nfidelity : " << exp(-d1) << " prob : " << exp(-d2) << endl;
+    //cout << "\nfidelity : " << exp(-d1) << " prob : " << exp(-d2) << endl;
     // RLBSPAns.push_back({exp(-d1), exp(-d2)});
     RLBSPAns.push_back({d1, d2});
     printPath(Cpath);
