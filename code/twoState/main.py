@@ -153,9 +153,9 @@ print(num_of_node, file=f)
 for n in G.nodes():
     (p1, p2) = positions[n]
     print(
-        str(p1 * 300)
+        str(p1 * 250)
         + " "
-        + str(p2 * 300)
+        + str(p2 * 250)
         + " "
         + str(
             ceil(random.random() * (max_memory_cnt - min_memory_cnt)) + min_memory_cnt
