@@ -16,6 +16,12 @@ def compile_and_run(input_file, threshold):
     except Exception as e:
         print(f"Error occurred: {e}")
 
+def validAnswer(name):
+    with open("output/" + name + ".txt", "r") as file:
+        for line in file:
+            if line[:5] == "error":
+                return 0
+        return 1
 
 def readResult(arr, node, name):
     with open("output/" + name + ".txt", "r") as file:
@@ -32,10 +38,50 @@ def readResult(arr, node, name):
                     val = float(val)
                 arr[key][node].append(val)
 
+def print_etodn(rLbsp,qPath,qLeap,node_num):
+    rLbspTime = []
+    qPathTime = []
+    qLeapTime = []
+    for el in node_num:
+        rLbspTime.append(rLbsp["Time"][el][0])
+        qPathTime.append(qPath["Time"][el][0])
+        qLeapTime.append(qLeap["Time"][el][0])
+    graph.execution_time_on_different_node([rLbspTime, qPathTime, qLeapTime], node_num)
+
+def print_rate(node_num,runTime,threshold):
+    ans = [[] for _ in range(3)]
+    for node in node_num:
+        rLbspTime,qPathTime,qLeapTime = 0,0,0
+        for _ in range(runTime):
+            subprocess.run(
+            [
+                "python",
+                "main.py",
+                "graph.txt",
+                str(node),
+                "10",
+                "14",
+                "0.4",
+                "0.85",
+                "1",
+            ])
+            print("new graph")
+            compile_and_run("graph.txt",threshold)
+            rLbspTime += validAnswer("RLBSP")
+            qPathTime += validAnswer("qPath")
+            qLeapTime += validAnswer("qLeap")
+        
+        ans[0].append(rLbspTime / runTime)
+        ans[1].append(qPathTime / runTime)
+        ans[2].append(qLeapTime / runTime)
+    
+    graph.find_answer_rate(ans,node_num)
+
+
 
 if __name__ == "__main__":
     import sys
-
+    print_rate([3,5],10,0.8)
     if len(sys.argv) < 2:
         print("Usage: python3 script.py <number of node> <number of node> ...")
         sys.exit(1)
@@ -49,7 +95,7 @@ if __name__ == "__main__":
 
         subprocess.run(
             [
-                "python3",
+                "python",
                 "main.py",
                 "graph.txt",
                 number_of_nodes,
@@ -90,11 +136,5 @@ if __name__ == "__main__":
             threshold,
         )
 
-    rLbspTime = []
-    qPathTime = []
-    qLeapTime = []
-    for el in node_num:
-        rLbspTime.append(rLbsp["Time"][el][0])
-        qPathTime.append(qPath["Time"][el][0])
-        qLeapTime.append(qLeap["Time"][el][0])
-    graph.execution_time_on_different_node([rLbspTime, qPathTime, qLeapTime], node_num)
+    print_etodn(rLbsp,qPath,qLeap,node_num)
+

@@ -106,6 +106,27 @@ def execution_time_on_different_node(time,n):
     plt.savefig(f"plot/image/time_on_different_nodes.png")
     plt.close()
 
+def find_answer_rate(time,n):
+    name = ["Ours", "Q-Path", "Q-Leap"]
+
+    for i in range(len(time)):
+        plt.plot(n, time[i], color="black")
+        plt.plot(
+            n,
+            time[i],
+            marker=marker[i],
+            color=color[i],
+            markerfacecolor="none",
+            label=name[i],
+        )
+
+    plt.xticks(n)
+    plt.xlabel("the number of nodes")
+    plt.ylabel("%")
+    plt.title("Different nodes")
+    plt.legend(loc="upper right")
+    plt.savefig(f"plot/image/answer_rate.png")
+    plt.close()
 
 # 某個8個節點 memory 10-14的case，0代表找不到`
 #different_threshold([[0.0288548,0.0131193,0.00488779],[0.00748051,0.00095429,0.000147434],[0.000206319,0,0]], [0.7.0.8,0.9])
