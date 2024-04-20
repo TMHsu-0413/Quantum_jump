@@ -31,8 +31,8 @@ public:
   double swappingProb;
   int memUsed;
   vector<pathInfo>neighbor;
-  Node(): id(-1), x(-1), y(-1), mem(-1), swappingProb(-1) {;}
-  Node(int idx, double a, double b, int c, double d) : id(idx), x(a), y(b), mem(c), swappingProb(d) {;}
+  Node(): id(-1), x(-1), y(-1), mem(0), memUsed(0), swappingProb(-1) {;}
+  Node(int idx, double a, double b, int c, double d) : id(idx), x(a), y(b), mem(c), memUsed(0), swappingProb(d) {;}
   const bool operator<(const Node &b) const { 
       if(x == b.x) return y < b.y;
       return y < b.y;

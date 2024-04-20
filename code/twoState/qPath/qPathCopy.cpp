@@ -59,7 +59,6 @@ void buildGraph() {
       qNode[i].neighbor[edgeIdx].purProb = tmpPurPrb;
     }
   }
-  printPurifiTable();
 }
 void resetMemUsed() {
   for (int i = 0; i < numQn; i++) {
@@ -68,11 +67,15 @@ void resetMemUsed() {
 }
 
 bool checkMem(int curNode, int nextNode) {
+  if(curNode >= numQn || nextNode >= numQn){
+    cout << "node exceed : " << curNode << ' ' << nextNode << '\n';
+  }
   if (qNode[curNode].memUsed > qNode[curNode].mem ||
       qNode[nextNode].memUsed > qNode[nextNode].mem) {
-    std::cout << "mem overflow " << qNode[curNode].memUsed << " "
+    cout << "curNode " << curNode << '\n';
+    cout << "mem overflow " << qNode[curNode].memUsed << " "
               << qNode[nextNode].memUsed << '\n';
-    std::cout << "mem i = " << qNode[curNode].mem
+    cout << "mem i = " << qNode[curNode].mem
               << " j = " << qNode[nextNode].mem << '\n';
     resetMemUsed();
     return 0;
@@ -109,7 +112,9 @@ int purifyDicision(
     purDicision.pop();
     int curNode = path[edgeChoose];
     int nextNode = path[edgeChoose + 1];
+    assert(curNode < numQn && nextNode < numQn);
     int edgeIdx = edgeIdMap[curNode][nextNode];
+    assert(qNode[curNode].neighbor.size() > edgeIdx);
     vector<double> edgePurF = qNode[curNode].neighbor[edgeIdx].purFidelity;
 
     int curNodeMemUsed = 1 + qNode[curNode].memUsed; // purTimes[edgeChoose]
@@ -123,9 +128,8 @@ int purifyDicision(
   return -1;
 }
 void updEdgeCost() {
-  // 如果 path Fidelity 沒過，就不斷找 purify 後 F 差異最大的進行 purify。
-  
-  vector<int> purTimes(path.size() + 1, 0);
+
+  vector<int> purTimes(path.size(), 0);
   auto tmp = countFB(purTimes);
   double curF = tmp.first, curP = tmp.second;
   priority_queue<pair<double, int>, vector<pair<double, int>>> purDicision;
@@ -153,9 +157,7 @@ void updEdgeCost() {
       pathFailed = 1;
       break;
     } else {
-      if (!checkMem(path[edgeChoose], path[edgeChoose + 1])) {
-        cout << "wrong choose out of mem\n";
-      }
+      assert(checkMem(path[edgeChoose], path[edgeChoose + 1]));
       purTimes[edgeChoose]++;
       qNode[path[edgeChoose]].memUsed++;
       qNode[path[edgeChoose + 1]].memUsed++;
@@ -176,6 +178,7 @@ void routing() {
   buildGraph();
   for(int i=0; i<numQn; i++){
     path.push_back(i);
+    qNode[i].memUsed = 0;
   }
   updEdgeCost();
 }
