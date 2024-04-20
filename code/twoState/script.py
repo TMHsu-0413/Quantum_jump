@@ -6,11 +6,6 @@ from plot import graph
 
 def compile_and_run(input_file, threshold):
     try:
-        subprocess.run(
-            ["g++", "--std=c++17", "qPath/qPathCopy.cpp", "-o", "output/qPath"]
-        )
-        subprocess.run(["g++", "--std=c++17", "qLeap/qLeap.cpp", "-o", "output/qLeap"])
-        subprocess.run(["g++", "--std=c++17", "RLBSP/RLBSP.cpp", "-o", "output/RLBSP"])
         subprocess.run(["./output/qPath", input_file, str(threshold)])
         subprocess.run(["./output/qLeap", input_file, str(threshold)])
         subprocess.run(["./output/RLBSP", input_file, str(threshold)])
@@ -65,8 +60,8 @@ def print_average_in_different_nodes(node_num, runTime, threshold):
                     "main.py",
                     "graph.txt",
                     str(node),
-                    "10",
-                    "14",
+                    "5",
+                    "9",
                     "0.4",
                     "0.85",
                     "1",
@@ -97,7 +92,7 @@ def print_answer_in_different_memory(mem, runTime, node, th):
                     str(node),
                     str(mn),
                     str(mx),
-                    "0.4",
+                    "0.3",
                     "0.85",
                     "1",
                 ]
@@ -120,6 +115,9 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("Usage: python3 script.py <number of node> <number of node> ...")
         sys.exit(1)
+    subprocess.run(["g++", "--std=c++17", "qPath/qPath.cpp", "-o", "output/qPath"])
+    subprocess.run(["g++", "--std=c++17", "qLeap/qLeap.cpp", "-o", "output/qLeap"])
+    subprocess.run(["g++", "--std=c++17", "RLBSP/RLBSP.cpp", "-o", "output/RLBSP"])
 
     node_num = []
     qPath = defaultdict(lambda: defaultdict(list))

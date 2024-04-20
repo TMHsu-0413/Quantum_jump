@@ -252,8 +252,9 @@ protected:
         memoryUsed.push_back(Cpath[i]->memory);
     }
     cout << endl << "mem  :  ";
-    for (auto &c : memoryUsed)
+    for (auto &c : memoryUsed) {
       cout << c << " ";
+    }
     cout << endl;
   }
 
@@ -361,16 +362,14 @@ protected:
     Cpath.push_back(cur);
     return;
   }
-
   void RLBSP(unordered_map<Node *, array<double, 2>> &dist,
              unordered_map<Node *, array<Node *, 2>> &parent, Node *s,
              Node *d) {
     unordered_map<Node *, double> theta;
     unordered_map<Node *, double> minDiff;
-    double lastratio = 0;
     d1 = dist[d][0];
     d2 = dist[d][1];
-    Cpath.clear();
+    double lastratio = 0;
     getPath(parent, Cpath, d, s);
     priority_queue<Label> pq;
     // Algo1中的4,5行
@@ -384,8 +383,8 @@ protected:
           double newCost1 = dist[prevNode][0] + prev.fidelity,
                  newCost2 = dist[prevNode][1] + prev.prob;
 
-          if (over_Threshold(newCost1))
-            continue;
+          // if (over_Threshold(newCost1))
+          // continue;
 
           double diffCost1 = newCost1 - dist[cur][0],
                  diffCost2 = newCost2 - dist[cur][1];
@@ -404,33 +403,21 @@ protected:
           }
         }
         if (parent[cur][0] != nullptr) {
-          vector<Node *> tempPath;
-          getPath(parent, tempPath, parent[cur][0], s);
-          tempPath.push_back(cur);
-          pq.push({minTheta, minCost2, cur, tempPath});
-          // cout << "before pq push [" << minTheta << ", " << minCost2 << ", "
-          // << cur->ID << ", " << cur->memory << endl; //
-          // cout<<parent[cur][0]->ID<<"
-          //  "<<parent[cur][0]->memory<<" "<<parent[cur][1]->ID<<"
-          //  "<<parent[cur][1]->memory<<endl;
+          pq.push({minTheta, minCost2, cur});
           theta[cur] = minTheta;
           minDiff[cur] = minCost2;
         }
       }
     }
     while (!pq.empty()) {
-      // Label內改成紀錄目前這條path經過的點的資訊，不然會因為threshold超過導致更新有問題
       Label temp = pq.top();
       double slope = temp.slope, diffCost = temp.diffCost;
       Node *cur = temp.node;
-
-      vector<Node *> curPath = temp.path;
       pq.pop();
 
       // lazy delete
-      if (minDiff[cur] != diffCost) {
+      if (minDiff[cur] != diffCost)
         continue;
-      }
 
       // output part
       // cout << slope << " " << diffCost << " " << cur->ID << " " <<
@@ -457,32 +444,26 @@ protected:
       }
       cout << endl;
       */
-      // cout << slope << " " << diffCost << " " << cur->ID << " " <<
-      // cur->memory
-      // << endl;
 
       minDiff[cur] = DBL_MAX;
       theta[cur] = DBL_MAX;
       parent[cur][1] = parent[cur][0];
       parent[cur][0] = nullptr;
-      // cout << "pq pop : " << slope << " " << diffCost << " " << cur->ID << "
-      // " << cur->memory << endl; // cout<<parent[cur][1]->ID<<"
-      //  "<<parent[cur][1]->memory<<endl;
       dist[cur][0] = dist[cur][0] - (slope * diffCost);
       dist[cur][1] = dist[cur][1] + diffCost;
 
       if (cur == d) {
         if (slope >= lastratio) {
-          // cout << "\nfidelity : " << exp(-d1) << " prob : " << exp(-d2) <<
-          // endl;
+          cout << "\nfidelity : " << exp(-d1) << " prob : " << exp(-d2) << endl;
           RLBSPAns.push_back({d1, d2});
-          // RLBSPAns.push_back({exp(-d1), exp(-d2)});
-          // printPath(Cpath);
+          printPath(Cpath);
           lastratio = slope;
+          if (dist[d][0] > -ln(threshold)) {
+            return;
+          }
         }
         Cpath.clear();
-        Cpath = curPath;
-        // getPath(parent, Cpath, d, s);
+        getPath(parent, Cpath, d, s);
         d1 = dist[d][0];
         d2 = dist[d][1];
       }
@@ -494,8 +475,8 @@ protected:
         double newCost1 = dist[prevNode][0] + prev.fidelity,
                newCost2 = dist[prevNode][1] + prev.prob;
 
-        if (over_Threshold(newCost1))
-          continue;
+        // if (over_Threshold(newCost1))
+        // continue;
 
         double diffCost1 = newCost1 - dist[cur][0],
                diffCost2 = newCost2 - dist[cur][1];
@@ -516,44 +497,31 @@ protected:
           }
         }
       }
+
       if (parent[cur][0] != nullptr) {
-        vector<Node *> tempPath;
-        getPath(parent, tempPath, parent[cur][0], s);
-        tempPath.push_back(cur);
-        pq.push({minTheta, minCost2, cur, tempPath});
-        // cout << "pq push [" << minTheta << ", " << minCost2 << ", " <<
-        // cur->ID
-        // << ", " << cur->memory << endl; cout << "pq push parent: " <<
-        // minTheta
-        // << " " << minCost2 << " " << cur->ID << " " << cur->memory << endl;
-        // cout << "Push 13: [" << minTheta
-        // << " ," << minCost2 << " ," << cur
+        pq.push({minTheta, minCost2, cur});
+        // cout << "Push 13: [" << minTheta << " ," << minCost2 << " ," << cur
         // << endl;
         theta[cur] = minTheta;
         minDiff[cur] = minCost2;
       }
 
       // 15行
-      vector<Node *> tempPath = curPath;
       for (auto &nxt : cur->neighbor) {
         Node *nxtNode = nxt.node;
         double newCost1 = dist[cur][0] + nxt.fidelity,
                newCost2 = dist[cur][1] + nxt.prob;
-        if (over_Threshold(newCost1))
-          continue;
+
+        // if (over_Threshold(newCost1))
+        // continue;
 
         double diffCost1 = newCost1 - dist[nxtNode][0],
                diffCost2 = newCost2 - dist[nxtNode][1];
 
         double curTheta = -diffCost1 / diffCost2;
         if (diffCost2 < 0) {
-          if ((curTheta < theta[nxtNode]) || ((curTheta == theta[nxtNode]) &&
-                                              (diffCost2 < minDiff[nxtNode]))) {
-            tempPath.push_back(nxtNode);
-            pq.push({curTheta, diffCost2, nxtNode, tempPath});
-            tempPath.pop_back();
-            // cout << "pq push [" << curTheta << ", " << diffCost2 << ", " <<
-            // nxtNode->ID << ", " << nxtNode->memory << endl;
+          if (curTheta <= theta[nxtNode]) {
+            pq.push({curTheta, diffCost2, nxtNode});
             minDiff[nxtNode] = diffCost2;
             theta[nxtNode] = curTheta;
             parent[nxtNode][0] = cur;
@@ -561,8 +529,7 @@ protected:
         }
       }
     }
-    // cout << "\nfidelity : " << exp(-d1) << " prob : " << exp(-d2) << endl;
-    //  RLBSPAns.push_back({exp(-d1), exp(-d2)});
+    cout << "\nfidelity : " << exp(-d1) << " prob : " << exp(-d2) << endl;
     RLBSPAns.push_back({d1, d2});
     printPath(Cpath);
   }
@@ -574,7 +541,7 @@ protected:
       cout << "error to open output.txt" << endl;
       return;
     }
-    if (exp(-d1) < threshold) {
+    if (d1 > -ln(threshold)) {
       ofs << "error: no path" << endl;
       ofs << "Time: " << time << endl;
       return;
@@ -588,7 +555,7 @@ protected:
         memoryUsed.push_back(Cpath[i]->memory);
     }
     ofs << endl << "PurTimes: ";
-    for (auto &c : memoryUsed)
+    for (auto c : memoryUsed)
       ofs << c - 1 << " ";
     ofs << endl;
     ofs << "Fidelity: " << exp(-d1) << endl;
