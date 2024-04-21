@@ -16,6 +16,10 @@ public:
       return diffCost < b.diffCost;
     return slope > b.slope;
   }
+
+  const bool operator==(const Label &b) const {
+    return (slope == b.slope) && (diffCost == b.diffCost) && (node == b.node);
+  }
 };
 
 class path {
@@ -35,4 +39,7 @@ public:
   vector<path> neighbor, parent;
   Node() { ; }
   Node(int id, int m) : ID(id), memory(m) { ; }
+  const bool operator==(const Node* b) const {
+    return (ID == b.ID) && (memory == b.memory);
+  }
 };

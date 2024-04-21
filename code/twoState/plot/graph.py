@@ -29,7 +29,7 @@ def RLBSP_point(name, x=1.0, y=1.0):
         ax.scatter(x, y)
     ax.legend(loc="upper right")
     img_dir = os.path.dirname(__file__) + "/image/"
-    plt.savefig(img_dir + name[3:-4] + ".png")
+    plt.savefig(img_dir + name[7:-4] + ".png")
     return mx_x, mx_y
     # plt.savefig('2d_graph.png')
 
@@ -155,6 +155,9 @@ def find_diff_memory(ans,mem,node,th):
     plt.legend(loc="upper right")
     plt.savefig(f"plot/image/find_rate_{th}threshold_{node}nodes.png")
     plt.close()
+
+#RLBSP_point("output/RLBSPpoint.txt")
+#RLBSP_point("output/allpoint.txt")
 
 # 某個8個節點 memory 10-14的case，0代表找不到`
 #different_threshold([[0.0288548,0.0131193,0.00488779],[0.00748051,0.00095429,0.000147434],[0.000206319,0,0]], [0.7.0.8,0.9])
