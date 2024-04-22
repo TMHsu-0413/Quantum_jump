@@ -10,7 +10,7 @@ marker = ["o", "s", "x"]
 color = ["r", "g", "b"]
 
 
-def RLBSP_point(name, x=1.0, y=1.0):
+def RLBSP_point(name, x=1.0, y=3.5):
     mx_x, mx_y = x, y
     with open(name, "r") as f:
         point = []

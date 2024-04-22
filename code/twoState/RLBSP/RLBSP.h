@@ -6,19 +6,18 @@ class Node;
 class Label {
 public:
   double slope, diffCost;
-  // Label內改成紀錄目前這條path經過的點的資訊，不然會因為threshold超過導致更新有問題
+  array<Node*, 2> prev_parent;
+  array<double, 2> prev_dist;
+  double prev_minDiff;
+  double prev_theta;
   Node *node;
 
-  Label(double s, double d, Node *n) : slope(s), diffCost(d), node(n) { ; }
+  Label(double s, double d, Node *n, double minDiff, double theta, array<Node*, 2> parent, array<double,2> dist) : slope(s), diffCost(d), node(n),prev_theta(theta), prev_minDiff(minDiff), prev_parent(parent), prev_dist(dist) { ; }
 
   const bool operator<(const Label &b) const {
     if (slope == b.slope)
       return diffCost < b.diffCost;
     return slope > b.slope;
-  }
-
-  const bool operator==(const Label &b) const {
-    return (slope == b.slope) && (diffCost == b.diffCost) && (node == b.node);
   }
 };
 
@@ -39,7 +38,4 @@ public:
   vector<path> neighbor, parent;
   Node() { ; }
   Node(int id, int m) : ID(id), memory(m) { ; }
-  const bool operator==(const Node* b) const {
-    return (ID == b.ID) && (memory == b.memory);
-  }
 };

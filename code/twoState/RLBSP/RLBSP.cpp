@@ -35,10 +35,7 @@ public:
       cout << "can't arrive dst" << endl;
       return;
     }
-    bool find_optimal = RLBSP(src, dst);
-    if (!find_optimal){
-      localSearch(src,dst);
-    }
+    RLBSP(src, dst);
     auto end = chrono::high_resolution_clock::now();
     auto diff = end - start;
     double time = chrono::duration<double>(diff).count();
@@ -62,17 +59,7 @@ protected:
   vector<double> dis;
   string filename;
 
-  // 最後一個滿足extreme supported point當時的資訊
-  unordered_map<Node *, double> copy_theta;
-  unordered_map<Node *, double> copy_minDiff;
-  unordered_map<Node *, array<double, 2>> copy_dist; // Node : {d1,d2}
-  unordered_map<Node *, array<Node *, 2>> copy_parent; // Node : {Cpred,pred}
-  vector<Node *> copy_Cpath;
-  priority_queue<Label> copy_pq;
-  double copy_d1, copy_d2;
-  vector<Label> copy_operation;
-
-
+  unordered_set<Label> abandomLabel;
   unordered_map<int, unordered_map<int, Node *>> nodeMap;
 
   Node *getNode(int ID, int mem) {
@@ -316,28 +303,6 @@ protected:
     return;
   }
 
-  void copyState(unordered_map<Node*,double> &theta, unordered_map<Node*,double> &minDiff, priority_queue<Label> &pq){
-    copy_theta = theta;
-    copy_minDiff = minDiff;
-    copy_dist = dist;
-    copy_parent = parent;
-    copy_Cpath = Cpath;
-    copy_pq = pq;
-    copy_d1 = d1;
-    copy_d2 = d2;
-  }
-
-  void getCopyState(unordered_map<Node*,double> &theta, unordered_map<Node*,double> &minDiff, priority_queue<Label> &pq){
-    theta = copy_theta;
-    minDiff = copy_minDiff;
-    dist = copy_dist;
-    parent = copy_parent;
-    Cpath = copy_Cpath;
-    pq = copy_pq;
-    d1 = copy_d1;
-    d2 = copy_d2;
-  }
-
   bool RLBSP(Node *s, Node *d) {
     unordered_map<Node *, double> theta;
     unordered_map<Node *, double> minDiff;
@@ -359,6 +324,8 @@ protected:
         theta[cur] = DBL_MAX;
         minDiff[cur] = DBL_MAX;
         double minTheta = DBL_MAX, minCost2 = DBL_MAX;
+        array<Node*, 2> prev_parent = parent[cur];
+        array<double, 2> prev_dist = dist[cur];
         for (auto &prev : cur->parent) {
           Node *prevNode = prev.node;
           double newCost1 = dist[prevNode][0] + prev.fidelity,
@@ -382,14 +349,14 @@ protected:
           }
         }
         if (parent[cur][0] != nullptr) {
-          pq.push({minTheta, minCost2, cur});
+          pq.push({minTheta, minCost2, cur, DBL_MAX, DBL_MAX, prev_parent, prev_dist});
           theta[cur] = minTheta;
           minDiff[cur] = minCost2;
         }
       }
     }
     // 把第一條shortest path的所有東西更新完後，複製一份
-    copyState(theta,minDiff,pq);
+    // copyState(theta,minDiff,pq);
 
     while (!pq.empty()) {
       Label temp = pq.top();
@@ -401,6 +368,12 @@ protected:
       // lazy delete
       if (minDiff[cur] != diffCost)
         continue;
+
+      array<Node *, 2> prev_parent = parent[cur];
+      double prev_minDiff = minDiff[cur];
+      double prev_theta = theta[cur];
+      array<double,2> prev_dist = dist[cur];
+
       minDiff[cur] = DBL_MAX;
       theta[cur] = DBL_MAX;
       parent[cur][1] = parent[cur][0];
@@ -408,10 +381,11 @@ protected:
       dist[cur][0] = dist[cur][0] - (slope * diffCost);
       dist[cur][1] = dist[cur][1] + diffCost;
 
+
       if (cur == d) {
         if (dist[d][0] > -ln(threshold)) {
-          copy_operation = operation;
-          find_optimal = false;
+          // copy_operation = operation;
+          localSearch(s,d,lastratio,theta,minDiff,operation,pq);
           break;
         }
         else if (slope >= lastratio) {
@@ -425,7 +399,7 @@ protected:
         getPath(parent, Cpath, d, s);
         d1 = dist[d][0];
         d2 = dist[d][1];
-        copyState(theta,minDiff,pq);
+        // copyState(theta,minDiff,pq);
       }
 
       // 13行
@@ -459,9 +433,8 @@ protected:
       }
 
       if (parent[cur][0] != nullptr) {
-        pq.push({minTheta, minCost2, cur});
-        // cout << "Push 13: [" << minTheta << " ," << minCost2 << " ," << cur
-        // << endl;
+        pq.push({minTheta, minCost2, cur, DBL_MAX, DBL_MAX, prev_parent, prev_dist});
+        // cout << "Push 13: [" << minTheta << " ," << minCost2 << " ," << cur // << endl;
         theta[cur] = minTheta;
         minDiff[cur] = minCost2;
       }
@@ -469,6 +442,10 @@ protected:
       // 15行
       for (auto &nxt : cur->neighbor) {
         Node *nxtNode = nxt.node;
+        array<Node*,2> nxt_prev_parent = parent[nxtNode];
+        array<double,2> nxt_prev_dist = dist[nxtNode];
+        double nxt_prev_theta = theta[nxtNode];
+        double nxt_prev_minDiff = minDiff[nxtNode];
         double newCost1 = dist[cur][0] + nxt.fidelity,
                newCost2 = dist[cur][1] + nxt.prob;
 
@@ -481,7 +458,7 @@ protected:
         double curTheta = - diffCost1 / diffCost2;
         if (diffCost2 < 0) {
           if (curTheta <= theta[nxtNode]) {
-            pq.push({curTheta, diffCost2, nxtNode});
+            pq.push({curTheta, diffCost2, nxtNode, nxt_prev_minDiff, nxt_prev_theta, nxt_prev_parent, nxt_prev_dist});
             minDiff[nxtNode] = diffCost2;
             theta[nxtNode] = curTheta;
             parent[nxtNode][0] = cur;
@@ -495,114 +472,128 @@ protected:
     return find_optimal;
   }
 
-  void RLBSP_localSearch(Node *s, Node *d){
-    unordered_map<Node *, double> theta;
-    unordered_map<Node *, double> minDiff;
-    priority_queue<Label> pq;
-    vector<Label> operation = copy_operation;
-    while (true){
-      Label abandom_label = operation.back();
-      operation.pop_back();
-      getCopyState(theta,minDiff,pq);
-      int op_idx = 0;
-      while (!pq.empty()) {
-        Label temp = pq.top();
-        double slope = temp.slope, diffCost = temp.diffCost;
-        Node *cur = temp.node;
-        pq.pop();
-        if (temp == abandom_label)
-          continue;
+  void back_operation(vector<Label> &operation, unordered_map<Node*, double> &theta, unordered_map<Node*, double> &minDiff){
+    Label abandom = operation.back();
+    abandomLabel.insert(abandom);
+    Node* node = abandom.node;
 
-        // lazy delete
-        if (minDiff[cur] != diffCost)
-          continue;
-        minDiff[cur] = DBL_MAX;
-        theta[cur] = DBL_MAX;
-        parent[cur][1] = parent[cur][0];
-        parent[cur][0] = nullptr;
-        dist[cur][0] = dist[cur][0] - (slope * diffCost);
-        dist[cur][1] = dist[cur][1] + diffCost;
+    operation.pop_back();
 
-        if (cur == d) {
-          if (dist[d][0] > -ln(threshold)) {
-            continue;
-          }
-          else if (slope >= lastratio) {
-            cout << "\nfidelity : " << exp(-d1) << " prob : " << exp(-d2) << endl;
-            RLBSPAns.push_back({d1, d2});
-            printPath(Cpath);
-            lastratio = slope;
-          }
-          Cpath.clear();
-          getPath(parent, Cpath, d, s);
-          d1 = dist[d][0];
-          d2 = dist[d][1];
-          if (slopt == lastratio)
-            return 1;
+    theta[node] = abandom.prev_theta;
+    minDiff[node] = abandom.prev_minDiff;
+    parent[node] = abandom.prev_parent;
+    dist[node] = abandom.prev_dist;
+  }
+
+
+  void localSearch(Node *s, Node *d, double lastratio, unordered_map<Node*, double> &theta, unordered_map<Node*, double> &minDiff, vector<Label> &operation, priority_queue<Label> &pq){
+    back_operation(operation, theta, minDiff);
+    while (!pq.empty()) {
+      Label temp = pq.top();
+      operation.push_back(temp);
+      double slope = temp.slope, diffCost = temp.diffCost;
+      Node *cur = temp.node;
+      pq.pop();
+
+      // lazy delete
+      if (minDiff[cur] != diffCost)
+        continue;
+
+      array<Node *, 2> prev_parent = parent[cur];
+      double prev_minDiff = minDiff[cur];
+      double prev_theta = theta[cur];
+      array<double,2> prev_dist = dist[cur];
+
+      minDiff[cur] = DBL_MAX;
+      theta[cur] = DBL_MAX;
+      parent[cur][1] = parent[cur][0];
+      parent[cur][0] = nullptr;
+      dist[cur][0] = dist[cur][0] - (slope * diffCost);
+      dist[cur][1] = dist[cur][1] + diffCost;
+
+
+      if (cur == d) {
+        if (dist[d][0] > -ln(threshold)) {
+          localSearch(s,d,lastratio,theta,minDiff,operation,pq);
+          return;
         }
+        else if (slope >= lastratio) {
+          cout << "\nfidelity : " << exp(-d1) << " prob : " << exp(-d2) << endl;
+          RLBSPAns.push_back({d1, d2});
+          printPath(Cpath);
+          lastratio = slope;
+        }
+        Cpath.clear();
+        operation.clear();
+        getPath(parent, Cpath, d, s);
+        d1 = dist[d][0];
+        d2 = dist[d][1];
+        // copyState(theta,minDiff,pq);
+      }
 
-        // 13行
-        double minTheta = DBL_MAX, minCost2 = DBL_MAX;
-        for (auto &prev : cur->parent) {
-          Node *prevNode = prev.node;
-          double newCost1 = dist[prevNode][0] + prev.fidelity,
-                newCost2 = dist[prevNode][1] + prev.prob;
+      // 13行
+      double minTheta = DBL_MAX, minCost2 = DBL_MAX;
+      for (auto &prev : cur->parent) {
+        Node *prevNode = prev.node;
+        double newCost1 = dist[prevNode][0] + prev.fidelity,
+               newCost2 = dist[prevNode][1] + prev.prob;
 
-          // if (over_Threshold(newCost1))
-          // continue;
+        // if (over_Threshold(newCost1))
+        // continue;
 
-          double diffCost1 = newCost1 - dist[cur][0],
-                diffCost2 = newCost2 - dist[cur][1];
+        double diffCost1 = newCost1 - dist[cur][0],
+               diffCost2 = newCost2 - dist[cur][1];
 
-          if (diffCost2 < 0) {
-            if (diffCost1 < 0)
-              continue;
-            double curTheta = -diffCost1 / diffCost2;
-            if (curTheta == minTheta) {
-              if (diffCost2 < minCost2) {
-                minCost2 = diffCost2;
-                parent[cur][0] = prevNode;
-              }
-            } else if (curTheta < minTheta) {
-              minTheta = curTheta;
+        if (diffCost2 < 0) {
+          if (diffCost1 < 0)
+            continue;
+          double curTheta = -diffCost1 / diffCost2;
+          if (curTheta == minTheta) {
+            if (diffCost2 < minCost2) {
               minCost2 = diffCost2;
               parent[cur][0] = prevNode;
             }
-          }
-        }
-
-        if (parent[cur][0] != nullptr) {
-          pq.push({minTheta, minCost2, cur});
-          // cout << "Push 13: [" << minTheta << " ," << minCost2 << " ," << cur
-          // << endl;
-          theta[cur] = minTheta;
-          minDiff[cur] = minCost2;
-        }
-
-        // 15行
-        for (auto &nxt : cur->neighbor) {
-          Node *nxtNode = nxt.node;
-          double newCost1 = dist[cur][0] + nxt.fidelity,
-                newCost2 = dist[cur][1] + nxt.prob;
-
-          // if (over_Threshold(newCost1))
-          // continue;
-
-          double diffCost1 = newCost1 - dist[nxtNode][0],
-                diffCost2 = newCost2 - dist[nxtNode][1];
-
-          double curTheta = -diffCost1 / diffCost2;
-          if (diffCost2 < 0) {
-            if (curTheta <= theta[nxtNode]) {
-              pq.push({curTheta, diffCost2, nxtNode});
-              minDiff[nxtNode] = diffCost2;
-              theta[nxtNode] = curTheta;
-              parent[nxtNode][0] = cur;
-            }
+          } else if (curTheta < minTheta) {
+            minTheta = curTheta;
+            minCost2 = diffCost2;
+            parent[cur][0] = prevNode;
           }
         }
       }
 
+      if (parent[cur][0] != nullptr) {
+        pq.push({minTheta, minCost2, cur, DBL_MAX, DBL_MAX, prev_parent, prev_dist});
+        // cout << "Push 13: [" << minTheta << " ," << minCost2 << " ," << cur // << endl;
+        theta[cur] = minTheta;
+        minDiff[cur] = minCost2;
+      }
+
+      // 15行
+      for (auto &nxt : cur->neighbor) {
+        Node *nxtNode = nxt.node;
+        array<Node*,2> nxt_prev_parent = parent[nxtNode];
+        array<double,2> nxt_prev_dist = dist[nxtNode];
+        double nxt_prev_theta = theta[nxtNode];
+        double nxt_prev_minDiff = minDiff[nxtNode];
+        double newCost1 = dist[cur][0] + nxt.fidelity,
+               newCost2 = dist[cur][1] + nxt.prob;
+
+        // if (over_Threshold(newCost1))
+        // continue;
+
+        double diffCost1 = newCost1 - dist[nxtNode][0],
+               diffCost2 = newCost2 - dist[nxtNode][1];
+
+        double curTheta = - diffCost1 / diffCost2;
+        if (diffCost2 < 0) {
+          if (curTheta <= theta[nxtNode]) {
+            pq.push({curTheta, diffCost2, nxtNode, nxt_prev_minDiff, nxt_prev_theta, nxt_prev_parent, nxt_prev_dist});
+            minDiff[nxtNode] = diffCost2;
+            theta[nxtNode] = curTheta;
+            parent[nxtNode][0] = cur;
+          }
+        }
+      }
     }
   }
   void write_path_info(double time) {
