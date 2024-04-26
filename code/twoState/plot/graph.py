@@ -11,7 +11,7 @@ color = ["r", "g", "b", "m"]
 name = ["Ours", "RLBSP", "Q-Path", "Q-Leap"]
 
 
-def RLBSP_point(name, x=1.5, y=5.0):
+def RLBSP_point(name, x=1.0, y=3.5):
     mx_x, mx_y = x, y
     with open(name, "r") as f:
         point = []
@@ -155,6 +155,9 @@ def find_diff_memory(ans, mem, node, th):
     plt.close()
 
 
+# RLBSP_point("output/RLBSPpoint.txt")
+# RLBSP_point("output/allpoint.txt")
+
 # 某個8個節點 memory 10-14的case，0代表找不到`
 # different_threshold([[0.0288548,0.0131193,0.00488779],[0.00748051,0.00095429,0.000147434],[0.000206319,0,0]], [0.7.0.8,0.9])
 # different_nodes([[0.0658073,],[0.0201253],[]],[10,50,70])
@@ -163,3 +166,5 @@ def find_diff_memory(ans, mem, node, th):
 # plt.show()
 # plt.close()
 # %%
+# %%
+
