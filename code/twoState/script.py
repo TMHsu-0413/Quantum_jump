@@ -9,6 +9,7 @@ def compile_and_run(input_file, threshold):
         subprocess.run(["./output/qPath", input_file, str(threshold)])
         subprocess.run(["./output/qLeap", input_file, str(threshold)])
         subprocess.run(["./output/RLBSP", input_file, str(threshold)])
+        subprocess.run(["./output/RSP", input_file, str(threshold), str(0.5)])
 
     except Exception as e:
         print(f"Error occurred: {e}")
@@ -118,11 +119,13 @@ if __name__ == "__main__":
     subprocess.run(["g++", "--std=c++17", "qPath/qPath.cpp", "-o", "output/qPath"])
     subprocess.run(["g++", "--std=c++17", "qLeap/qLeap.cpp", "-o", "output/qLeap"])
     subprocess.run(["g++", "--std=c++17", "RLBSP/RLBSP.cpp", "-o", "output/RLBSP"])
+    subprocess.run(["g++", "--std=c++17", "RSP/RSP.cpp", "-o", "output/RSP"])
 
     node_num = []
     qPath = defaultdict(lambda: defaultdict(list))
     qLeap = defaultdict(lambda: defaultdict(list))
     rLbsp = defaultdict(lambda: defaultdict(list))
+    rsp = defaultdict(lambda: defaultdict(list))
     for i in range(1, len(sys.argv)):
         number_of_nodes = sys.argv[i]
 
@@ -143,15 +146,20 @@ if __name__ == "__main__":
         node_num.append(number_of_nodes)
 
         threshold = [0.7, 0.75, 0.8, 0.85, 0.9]
-        for th in threshold:
+        for idx, th in enumerate(threshold):
             compile_and_run("graph.txt", th)
+            if idx == 0:
+                graph.RLBSP_point("output/RLBSPpoint.txt")
+                # graph.RLBSP_point("output/allpoint.txt")
 
             readResult(qPath, number_of_nodes, "qPath")
             readResult(qLeap, number_of_nodes, "qLeap")
             readResult(rLbsp, number_of_nodes, "RLBSP")
+            readResult(rsp, number_of_nodes, "RSP")
 
         graph.different_threshold(
             [
+                list(rsp["Probability"][number_of_nodes]),
                 list(rLbsp["Probability"][number_of_nodes]),
                 list(qPath["Probability"][number_of_nodes]),
                 list(qLeap["Probability"][number_of_nodes]),
@@ -161,6 +169,7 @@ if __name__ == "__main__":
         )
         graph.execution_time_on_different_threshold(
             [
+                rsp["Time"][number_of_nodes],
                 rLbsp["Time"][number_of_nodes],
                 qPath["Time"][number_of_nodes],
                 qLeap["Time"][number_of_nodes],
