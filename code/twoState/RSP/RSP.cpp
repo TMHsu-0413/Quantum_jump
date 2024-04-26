@@ -1,5 +1,4 @@
 #include "RSP.h"
-// #include "../../parameter.cpp"
 #include "../formula.h"
 #include <bits/stdc++.h>
 #include <chrono>
@@ -176,7 +175,7 @@ protected:
 
   void write_path_info(double time) {
     ofstream ofs;
-    ofs.open("output/RSP.txt");
+    ofs.open("output/RSP" + to_string(eps).substr(0, 4) + ".txt");
     if (!ofs.is_open()) {
       cout << "error to open output.txt" << endl;
       return;

@@ -9,7 +9,9 @@ def compile_and_run(input_file, threshold):
         subprocess.run(["./output/qPath", input_file, str(threshold)])
         subprocess.run(["./output/qLeap", input_file, str(threshold)])
         subprocess.run(["./output/RLBSP", input_file, str(threshold)])
-        subprocess.run(["./output/RSP", input_file, str(threshold), str(0.5)])
+        subprocess.run(["./output/RSP", input_file, str(threshold), str(0.50)])
+        subprocess.run(["./output/RSP", input_file, str(threshold), str(0.70)])
+        subprocess.run(["./output/RSP", input_file, str(threshold), str(1.00)])
 
     except Exception as e:
         print(f"Error occurred: {e}")
@@ -23,8 +25,8 @@ def validAnswer(name):
         return 1
 
 
-def readResult(arr, node, name):
-    with open("output/" + name + ".txt", "r") as file:
+def readResult(arr, node, name, eps=""):
+    with open("output/" + name + eps + ".txt", "r") as file:
         for line in file:
             if line[:5] == "error":
                 arr["Fidelity"][node].append(0)
@@ -125,7 +127,9 @@ if __name__ == "__main__":
     qPath = defaultdict(lambda: defaultdict(list))
     qLeap = defaultdict(lambda: defaultdict(list))
     rLbsp = defaultdict(lambda: defaultdict(list))
-    rsp = defaultdict(lambda: defaultdict(list))
+    rsp_5 = defaultdict(lambda: defaultdict(list))
+    rsp_7 = defaultdict(lambda: defaultdict(list))
+    rsp_10 = defaultdict(lambda: defaultdict(list))
     for i in range(1, len(sys.argv)):
         number_of_nodes = sys.argv[i]
 
@@ -148,18 +152,19 @@ if __name__ == "__main__":
         threshold = [0.7, 0.75, 0.8, 0.85, 0.9]
         for idx, th in enumerate(threshold):
             compile_and_run("graph.txt", th)
-            if idx == 0:
-                graph.RLBSP_point("output/RLBSPpoint.txt")
-                # graph.RLBSP_point("output/allpoint.txt")
 
             readResult(qPath, number_of_nodes, "qPath")
             readResult(qLeap, number_of_nodes, "qLeap")
             readResult(rLbsp, number_of_nodes, "RLBSP")
-            readResult(rsp, number_of_nodes, "RSP")
+            readResult(rsp_5, number_of_nodes, "RSP", "0.50")
+            readResult(rsp_7, number_of_nodes, "RSP", "0.70")
+            readResult(rsp_10, number_of_nodes, "RSP", "1.00")
 
         graph.different_threshold(
             [
-                list(rsp["Probability"][number_of_nodes]),
+                list(rsp_5["Probability"][number_of_nodes]),
+                list(rsp_7["Probability"][number_of_nodes]),
+                list(rsp_10["Probability"][number_of_nodes]),
                 list(rLbsp["Probability"][number_of_nodes]),
                 list(qPath["Probability"][number_of_nodes]),
                 list(qLeap["Probability"][number_of_nodes]),
@@ -169,7 +174,9 @@ if __name__ == "__main__":
         )
         graph.execution_time_on_different_threshold(
             [
-                rsp["Time"][number_of_nodes],
+                rsp_5["Time"][number_of_nodes],
+                rsp_7["Time"][number_of_nodes],
+                rsp_10["Time"][number_of_nodes],
                 rLbsp["Time"][number_of_nodes],
                 qPath["Time"][number_of_nodes],
                 qLeap["Time"][number_of_nodes],

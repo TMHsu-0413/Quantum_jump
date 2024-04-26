@@ -1,5 +1,4 @@
 #include "RLBSP.h"
-// #include "../../parameter.cpp"
 #include "../formula.h"
 #include <bits/stdc++.h>
 #include <chrono>
@@ -39,7 +38,7 @@ public:
     auto diff = end - start;
     double time = chrono::duration<double>(diff).count();
     write_path_info(time);
-    write_to_txt(RLBSPAns, "output/RLBSPpoint.txt");
+    // write_to_txt(RLBSPAns, "output/RLBSPpoint.txt");
   }
 
 protected:
@@ -58,7 +57,6 @@ protected:
   vector<double> dis;
   string filename;
 
-  unordered_set<Label> abandomLabel;
   unordered_map<int, unordered_map<int, Node *>> nodeMap;
 
   Node *getNode(int ID, int mem) {
@@ -469,21 +467,6 @@ protected:
     RLBSPAns.push_back({d1, d2});
     printPath(Cpath);
     return find_optimal;
-  }
-
-  void back_operation(vector<Label> &operation,
-                      unordered_map<Node *, double> &theta,
-                      unordered_map<Node *, double> &minDiff) {
-    Label abandom = operation.back();
-    abandomLabel.insert(abandom);
-    Node *node = abandom.node;
-
-    operation.pop_back();
-
-    theta[node] = abandom.prev_theta;
-    minDiff[node] = abandom.prev_minDiff;
-    parent[node] = abandom.prev_parent;
-    dist[node] = abandom.prev_dist;
   }
 
   void write_path_info(double time) {

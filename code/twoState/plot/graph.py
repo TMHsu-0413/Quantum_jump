@@ -6,9 +6,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import collections
 
-marker = ["o", "s", "x", "+"]
-color = ["r", "g", "b", "m"]
-name = ["Ours", "RLBSP", "Q-Path", "Q-Leap"]
+marker = ["o", "o", "o", "s", "x", "+"]
+color = ["r", "g", "b", "c", "m", "y"]
+name = ["Ours_0.5", "Ours_0.7", "Ours_1.0", "RLBSP", "Q-Path", "Q-Leap"]
 
 
 def RLBSP_point(name, x=1.0, y=3.5):
@@ -167,4 +167,5 @@ def find_diff_memory(ans, mem, node, th):
 # plt.close()
 # %%
 # %%
+
 
