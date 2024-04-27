@@ -8,10 +8,10 @@ def compile_and_run(input_file, threshold):
     try:
         subprocess.run(["./output/qPath", input_file, str(threshold)])
         subprocess.run(["./output/qLeap", input_file, str(threshold)])
-        subprocess.run(["./output/RLBSP", input_file, str(threshold)])
+        #subprocess.run(["./output/RLBSP", input_file, str(threshold)])
         subprocess.run(["./output/RSP", input_file, str(threshold), str(0.50)])
         subprocess.run(["./output/RSP", input_file, str(threshold), str(0.70)])
-        subprocess.run(["./output/RSP", input_file, str(threshold), str(1.00)])
+        subprocess.run(["./output/RSP", input_file, str(threshold), str(0.99)])
 
     except Exception as e:
         print(f"Error occurred: {e}")
@@ -41,21 +41,27 @@ def readResult(arr, node, name, eps=""):
                 arr[key][node].append(val)
 
 
-def print_etodn(rLbsp, qPath, qLeap, node_num):
-    rLbspTime = []
+def print_etodn(rsp_5,rsp_7,rsp_99, qPath, qLeap, node_num):
+    #rLbspTime = []
     qPathTime = []
+    rsp_5Time = []
+    rsp_7Time = []
+    rsp_99Time = []
     qLeapTime = []
     for el in node_num:
-        rLbspTime.append(rLbsp["Time"][el][0])
+        #rLbspTime.append(rLbsp["Time"][el][0])
         qPathTime.append(qPath["Time"][el][0])
         qLeapTime.append(qLeap["Time"][el][0])
-    graph.execution_time_on_different_node([rLbspTime, qPathTime, qLeapTime], node_num)
+        rsp_5Time.append(rsp_5["Time"][el][0])
+        rsp_7Time.append(rsp_7["Time"][el][0])
+        rsp_99Time.append(rsp_99["Time"][el][0])
+    graph.execution_time_on_different_node([rsp_5Time,rsp_7Time, rsp_99Time, qPathTime, qLeapTime], node_num)
 
 
 def print_average_in_different_nodes(node_num, runTime, threshold):
-    ans = [[] for _ in range(3)]
+    ans = [[] for _ in range(5)]
     for node in node_num:
-        rLbspTime, qPathTime, qLeapTime = 0, 0, 0
+        rsp_5Time,rsp_7Time,rsp_99Time, qPathTime, qLeapTime = 0, 0, 0, 0, 0
         for _ in range(runTime):
             subprocess.run(
                 [
@@ -71,21 +77,26 @@ def print_average_in_different_nodes(node_num, runTime, threshold):
                 ]
             )
             compile_and_run("graph.txt", threshold)
-            rLbspTime += validAnswer("RLBSP")
+
+            rsp_5Time += validAnswer("RSP0.50")
+            rsp_7Time += validAnswer("RSP0.70")
+            rsp_99Time += validAnswer("RSP0.99")
             qPathTime += validAnswer("qPath")
             qLeapTime += validAnswer("qLeap")
 
-        ans[0].append((rLbspTime / runTime) * 100)
-        ans[1].append((qPathTime / runTime) * 100)
-        ans[2].append((qLeapTime / runTime) * 100)
+        ans[0].append((rsp_5Time / runTime) * 100)
+        ans[1].append((rsp_7Time / runTime) * 100)
+        ans[2].append((rsp_99Time / runTime) * 100)
+        ans[3].append((qPathTime / runTime) * 100)
+        ans[4].append((qLeapTime / runTime) * 100)
 
     graph.find_answer_rate(ans, node_num, threshold)
 
 
 def print_answer_in_different_memory(mem, runTime, node, th):
-    ans = [[] for _ in range(3)]
+    ans = [[] for _ in range(5)]
     for [mn, mx] in mem:
-        rLbspTime, qPathTime, qLeapTime = 0, 0, 0
+        rsp_5Time,rsp_7Time,rsp_99Time, qPathTime, qLeapTime = 0, 0, 0, 0, 0
         for _ in range(runTime):
             subprocess.run(
                 [
@@ -102,13 +113,17 @@ def print_answer_in_different_memory(mem, runTime, node, th):
             )
             compile_and_run("graph.txt", th)
 
-            rLbspTime += validAnswer("RLBSP")
+            rsp_5Time += validAnswer("RSP0.50")
+            rsp_7Time += validAnswer("RSP0.70")
+            rsp_99Time += validAnswer("RSP0.99")
             qPathTime += validAnswer("qPath")
             qLeapTime += validAnswer("qLeap")
 
-        ans[0].append((rLbspTime / runTime) * 100)
-        ans[1].append((qPathTime / runTime) * 100)
-        ans[2].append((qLeapTime / runTime) * 100)
+        ans[0].append((rsp_5Time / runTime) * 100)
+        ans[1].append((rsp_7Time / runTime) * 100)
+        ans[2].append((rsp_99Time / runTime) * 100)
+        ans[3].append((qPathTime / runTime) * 100)
+        ans[4].append((qLeapTime / runTime) * 100)
     graph.find_diff_memory(ans, mem, node, th)
 
 
@@ -120,7 +135,7 @@ if __name__ == "__main__":
         sys.exit(1)
     subprocess.run(["g++", "--std=c++17", "qPath/qPath.cpp", "-o", "output/qPath"])
     subprocess.run(["g++", "--std=c++17", "qLeap/qLeap.cpp", "-o", "output/qLeap"])
-    subprocess.run(["g++", "--std=c++17", "RLBSP/RLBSP.cpp", "-o", "output/RLBSP"])
+    #subprocess.run(["g++", "--std=c++17", "RLBSP/RLBSP.cpp", "-o", "output/RLBSP"])
     subprocess.run(["g++", "--std=c++17", "RSP/RSP.cpp", "-o", "output/RSP"])
 
     node_num = []
@@ -129,7 +144,7 @@ if __name__ == "__main__":
     rLbsp = defaultdict(lambda: defaultdict(list))
     rsp_5 = defaultdict(lambda: defaultdict(list))
     rsp_7 = defaultdict(lambda: defaultdict(list))
-    rsp_10 = defaultdict(lambda: defaultdict(list))
+    rsp_99 = defaultdict(lambda: defaultdict(list))
     for i in range(1, len(sys.argv)):
         number_of_nodes = sys.argv[i]
 
@@ -139,8 +154,8 @@ if __name__ == "__main__":
                 "main.py",
                 "graph.txt",
                 number_of_nodes,
-                "10",
-                "14",
+                "5",
+                "9",
                 "0.3",
                 "0.85",
                 "0.85",
@@ -155,17 +170,17 @@ if __name__ == "__main__":
 
             readResult(qPath, number_of_nodes, "qPath")
             readResult(qLeap, number_of_nodes, "qLeap")
-            readResult(rLbsp, number_of_nodes, "RLBSP")
+            #readResult(rLbsp, number_of_nodes, "RLBSP")
             readResult(rsp_5, number_of_nodes, "RSP", "0.50")
             readResult(rsp_7, number_of_nodes, "RSP", "0.70")
-            readResult(rsp_10, number_of_nodes, "RSP", "1.00")
+            readResult(rsp_99, number_of_nodes, "RSP", "0.99")
 
         graph.different_threshold(
             [
                 list(rsp_5["Probability"][number_of_nodes]),
                 list(rsp_7["Probability"][number_of_nodes]),
-                list(rsp_10["Probability"][number_of_nodes]),
-                list(rLbsp["Probability"][number_of_nodes]),
+                list(rsp_99["Probability"][number_of_nodes]),
+                #list(rLbsp["Probability"][number_of_nodes]),
                 list(qPath["Probability"][number_of_nodes]),
                 list(qLeap["Probability"][number_of_nodes]),
             ],
@@ -176,8 +191,8 @@ if __name__ == "__main__":
             [
                 rsp_5["Time"][number_of_nodes],
                 rsp_7["Time"][number_of_nodes],
-                rsp_10["Time"][number_of_nodes],
-                rLbsp["Time"][number_of_nodes],
+                rsp_99["Time"][number_of_nodes],
+                #rLbsp["Time"][number_of_nodes],
                 qPath["Time"][number_of_nodes],
                 qLeap["Time"][number_of_nodes],
             ],
@@ -186,9 +201,9 @@ if __name__ == "__main__":
         )
 
     average_time = 50
-    average_th = 0.8
-    average_node = 30
+    average_th = 0.85
+    average_node = 20
 
-    # print_etodn(rLbsp, qPath, qLeap, node_num)
-    # print_average_in_different_nodes([30,50],average_time,average_th)
-    # print_answer_in_different_memory([[5,9],[10,14],[15,20]],average_time,average_node,average_th)
+    print_etodn(rsp_5,rsp_7,rsp_99, qPath, qLeap, node_num)
+    print_average_in_different_nodes([10,15,20,25],average_time,average_th)
+    print_answer_in_different_memory([[5,7],[8,10],[11,13]],average_time,average_node,average_th)

@@ -22,10 +22,10 @@ public:
     Initial(dist, dist2, parent, used);
 
     // 找所有的解
-    // vector<Node *> path;
-    // path.push_back(src);
-    // dfs(used, src, dst, 0, 0, path);
-    // write_to_txt(dfsAns, "output/allpoint.txt");
+    vector<Node *> path;
+    path.push_back(src);
+    dfs(used, src, dst, 0, 0, path);
+    write_to_txt(dfsAns, "output/allpoint.txt");
 
     bool havePath = dijkstra(src, dst, dist, parent);
     // 這張圖起點到終點沒連通
@@ -38,7 +38,7 @@ public:
     auto diff = end - start;
     double time = chrono::duration<double>(diff).count();
     write_path_info(time);
-    // write_to_txt(RLBSPAns, "output/RLBSPpoint.txt");
+    write_to_txt(RLBSPAns, "output/RLBSPpoint.txt");
   }
 
 protected:
