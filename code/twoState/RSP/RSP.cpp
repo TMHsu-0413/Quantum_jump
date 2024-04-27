@@ -19,7 +19,8 @@ public:
     buildGraph(filename);
     Node *src = getNode(0, 0), *dst = getNode(-1, -1);
 
-    RSP(src, dst, 1, node_number, eps);
+    SEA(src,dst,eps);
+    //RSP(src, dst, 1, node_number, eps);
     auto end = chrono::high_resolution_clock::now();
     auto diff = end - start;
     double time = chrono::duration<double>(diff).count();
@@ -36,6 +37,7 @@ protected:
   vector<double> memory;        // 單點的memory
   vector<double> swapping_prob; // 每個點做swapping的機率
   vector<double> dis;
+  vector<path> edgeSet;
   string filename;
 
   vector<Node *> Cpath;
@@ -109,11 +111,13 @@ protected:
             if (j == (n - 1)) {
               s->neighbor.push_back(path(-ln(curFidelity), -ln(curProb), d));
               d->parent.push_back(path(-ln(curFidelity), -ln(curProb), s));
+              edgeSet.push_back({-ln(curFidelity),-ln(curProb),s,d});
             } else {
               s->neighbor.push_back(
                   path(-ln(curFidelity), -ln(curProb * swapping_prob[j]), d));
               d->parent.push_back(
                   path(-ln(curFidelity), -ln(curProb * swapping_prob[j]), s));
+              edgeSet.push_back({-ln(curFidelity),-ln(curProb * swapping_prob[j]),s,d});
               // s->neighbor.push_back(path(-ln(curFidelity), -ln(curProb *
               // swapping_prob[j]), d));
               // d->parent.push_back(path(-ln(curFidelity), -ln(curProb *
@@ -262,6 +266,60 @@ protected:
         B_U = B;
     }
     SPPP(s, d, B_L, 2 * B_U, eps);
+  }
+
+  double shortestPath(Node*s, Node*d,double limit){
+    unordered_map<Node*,array<double,2>> dist;
+    dist[s] = {0, 0};
+
+    priority_queue<t, vector<t>, greater<t>> pq;
+    pq.push({0, 0, s});
+    while (!pq.empty()) {
+      t temp = pq.top();
+      pq.pop();
+      double c1 = get<0>(temp), c2 = get<1>(temp);
+      Node *cur = get<2>(temp);
+
+      if (c1 != dist[cur][0] && c2 != dist[cur][1])
+        continue;
+
+      for (auto &nxt : cur->neighbor) {
+        Node *nxtNode = nxt.node;
+        if (nxt.fidelity > limit)
+          continue;
+        if ((c1 + nxt.fidelity) <= dist[nxtNode][0]) {
+          if (c1 + nxt.fidelity < dist[nxtNode][0]) {
+            dist[nxtNode] = {c1 + nxt.fidelity, c2 + nxt.prob};
+            pq.push({dist[nxtNode][0], dist[nxtNode][1], nxtNode});
+          } else if (c2 + nxt.prob < dist[nxtNode][1]) {
+            dist[nxtNode] = {c1 + nxt.fidelity, c2 + nxt.prob};
+            pq.push({dist[nxtNode][0], dist[nxtNode][1], nxtNode});
+          }
+        }
+      }
+    }
+    if (dist.find(d) != dist.end())
+      return dist[d][0];
+    return DBL_MAX;
+  }
+
+  void SEA(Node* s,Node *d,double eps){
+    sort(edgeSet.begin(),edgeSet.end(),[](const path &a, const path &b){
+      return a.fidelity < b.fidelity;
+    });
+    int l = edgeSet.size();
+    int low = 0, high = l-1;
+    while(low < (high - 1)){
+      int j = (high + low) / 2;
+      if (shortestPath(s,d,edgeSet[j].fidelity) <= -ln(threshold))
+        high = j;
+      else
+        low = j;
+    }
+
+    double LB,UB; 
+    LB = edgeSet[high].fidelity, UB = node_number * edgeSet[high].fidelity;
+    RSP(s,d,LB,UB,eps);
   }
 };
 
