@@ -11,12 +11,12 @@ color = ["r", "g", "b", "c", "m"]
 name = ["Ours_0.5", "Ours_0.7", "Ours_0.99", "Q-Path", "Q-Leap"]
 
 
-def ans_point(ans,filename,th, x=1.0, y=1.0):
+def ans_point(ans, filename, th, x=1.0, y=1.0):
     mx_x, mx_y = x, y
     st = set()
-    for i,solve in enumerate(ans):
-        x,y = solve[0],solve[1]
-        st.add((x,y))
+    for i, solve in enumerate(ans):
+        x, y = solve[0], solve[1]
+        st.add((x, y))
     with open(filename, "r") as f:
         point = []
         for line in f:
@@ -31,13 +31,13 @@ def ans_point(ans,filename,th, x=1.0, y=1.0):
     plt.ylabel("probability")
     plt.xlim(0, mx_x)
     plt.ylim(0, mx_y)
-    plt.vlines(x=th,ymin=0,ymax=1, linestyles='dashed', colors='red')
+    plt.vlines(x=th, ymin=0, ymax=1, linestyles="dashed", colors="red")
     ax.set_title(str(filename[:-4]))
     for x, y in point:
         ax.scatter(x, y, color="grey")
-    for i,solve in enumerate(ans):
-        x,y = solve[0],solve[1]
-        ax.scatter(x,y,color=color[i],marker=marker[i],label=name[i])
+    for i, solve in enumerate(ans):
+        x, y = solve[0], solve[1]
+        ax.scatter(x, y, color=color[i], marker=marker[i], label=name[i])
     ax.legend(loc="upper right")
     img_dir = os.path.dirname(__file__) + "/image/"
     plt.savefig(img_dir + "ans_scatter.png")
@@ -164,7 +164,8 @@ def find_diff_memory(ans, mem, node, th):
     plt.savefig(f"plot/image/find_rate_{th}threshold_{node}nodes.png")
     plt.close()
 
-def find_diff_swapProb(ans,prob,node,th):
+
+def find_diff_swapProb(ans, prob, node, th):
     for i in range(len(ans)):
         plt.plot(prob, ans[i], color="black")
         plt.plot(
@@ -183,7 +184,8 @@ def find_diff_swapProb(ans,prob,node,th):
     plt.savefig(f"plot/image/diff_prob.png")
     plt.close()
 
-def avg_purify_time(ans,memory,node,th):
+
+def avg_purify_time(ans, memory, node, th):
     xsticks = []
     for i in range(len(memory)):
         new_arr = []
@@ -209,7 +211,8 @@ def avg_purify_time(ans,memory,node,th):
     plt.savefig(f"plot/image/avg_purify_time.png")
     plt.close()
 
-def max_purify_time(ans,memory,node,th):
+
+def max_purify_time(ans, memory, node, th):
     xsticks = []
     for i in range(len(memory)):
         new_arr = []
@@ -236,6 +239,60 @@ def max_purify_time(ans,memory,node,th):
     plt.close()
 
 
+def avg_entangle_dis(ans, dis, node, th):
+    xsticks = []
+    for i in range(len(dis)):
+        new_arr = []
+        new_arr.append(str(dis[i] - 10))
+        new_arr.append(str(dis[i] + 10))
+        xsticks.append("-".join(new_arr))
+
+    for i in range(len(ans)):
+        plt.plot(xsticks, ans[i], color="black")
+        plt.plot(
+            xsticks,
+            ans[i],
+            marker=marker[i],
+            color=color[i],
+            markerfacecolor="none",
+            label=name[i],
+        )
+
+    plt.xticks(xsticks)
+    plt.xlabel("distance")
+    plt.title("distance vs prob")
+    plt.legend(loc="upper right")
+    plt.savefig(f"plot/image/avg_entangle_dis.png")
+    plt.close()
+
+
+def avg_purifyTime_dis(ans, dis, node, th):
+    xsticks = []
+    for i in range(len(dis)):
+        new_arr = []
+        new_arr.append(str(dis[i] - 10))
+        new_arr.append(str(dis[i] + 10))
+        xsticks.append("-".join(new_arr))
+
+    for i in range(len(ans)):
+        plt.plot(xsticks, ans[i], color="black")
+        plt.plot(
+            xsticks,
+            ans[i],
+            marker=marker[i],
+            color=color[i],
+            markerfacecolor="none",
+            label=name[i],
+        )
+
+    plt.xticks(xsticks)
+    plt.xlabel("distance")
+    plt.title("distance vs purifyTime")
+    plt.legend(loc="upper right")
+    plt.savefig(f"plot/image/avg_purifyTime_dis.png")
+    plt.close()
+
+
 # RLBSP_point("output/RLBSPpoint.txt")
 # RLBSP_point("output/allpoint.txt")
 
@@ -248,5 +305,3 @@ def max_purify_time(ans,memory,node,th):
 # plt.close()
 # %%
 # %%
-
-
