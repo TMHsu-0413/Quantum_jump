@@ -11,12 +11,18 @@ color = ["r", "g", "b", "c", "m"]
 name = ["Ours_0.5", "Ours_0.7", "Ours_0.99", "Q-Path", "Q-Leap"]
 
 
-def RLBSP_point(name, x=1.0, y=3.5):
+def ans_point(ans,filename,th, x=1.0, y=1.0):
     mx_x, mx_y = x, y
-    with open(name, "r") as f:
+    st = set()
+    for i,solve in enumerate(ans):
+        x,y = solve[0],solve[1]
+        st.add((x,y))
+    with open(filename, "r") as f:
         point = []
         for line in f:
             data = line.split(" ")
+            if (float(data[0]), float(data[1])) in st:
+                continue
             point.append([float(data[0]), float(data[1])])
             mx_x = max(mx_x, float(data[0]))
             mx_y = max(mx_y, float(data[1]))
@@ -25,12 +31,16 @@ def RLBSP_point(name, x=1.0, y=3.5):
     plt.ylabel("probability")
     plt.xlim(0, mx_x)
     plt.ylim(0, mx_y)
-    ax.set_title(str(name[:-4]))
+    plt.vlines(x=th,ymin=0,ymax=1, linestyles='dashed', colors='red')
+    ax.set_title(str(filename[:-4]))
     for x, y in point:
-        ax.scatter(x, y)
+        ax.scatter(x, y, color="grey")
+    for i,solve in enumerate(ans):
+        x,y = solve[0],solve[1]
+        ax.scatter(x,y,color=color[i],marker=marker[i],label=name[i])
     ax.legend(loc="upper right")
     img_dir = os.path.dirname(__file__) + "/image/"
-    plt.savefig(img_dir + name[7:-4] + ".png")
+    plt.savefig(img_dir + "ans_scatter.png")
     plt.close()
     return mx_x, mx_y
     # plt.savefig('2d_graph.png')
@@ -152,6 +162,77 @@ def find_diff_memory(ans, mem, node, th):
     plt.title("Different memory")
     plt.legend(loc="upper right")
     plt.savefig(f"plot/image/find_rate_{th}threshold_{node}nodes.png")
+    plt.close()
+
+def find_diff_swapProb(ans,prob,node,th):
+    for i in range(len(ans)):
+        plt.plot(prob, ans[i], color="black")
+        plt.plot(
+            prob,
+            ans[i],
+            marker=marker[i],
+            color=color[i],
+            markerfacecolor="none",
+            label=name[i],
+        )
+
+    plt.xticks(prob)
+    plt.xlabel("swapping prob.")
+    plt.title("Different swapping probability")
+    plt.legend(loc="upper right")
+    plt.savefig(f"plot/image/diff_prob.png")
+    plt.close()
+
+def avg_purify_time(ans,memory,node,th):
+    xsticks = []
+    for i in range(len(memory)):
+        new_arr = []
+        for j in range(2):
+            new_arr.append(str(memory[i][j]))
+        xsticks.append("-".join(new_arr))
+
+    for i in range(len(ans)):
+        plt.plot(xsticks, ans[i], color="black")
+        plt.plot(
+            xsticks,
+            ans[i],
+            marker=marker[i],
+            color=color[i],
+            markerfacecolor="none",
+            label=name[i],
+        )
+
+    plt.xticks(xsticks)
+    plt.xlabel("memory")
+    plt.title("average purify times")
+    plt.legend(loc="upper right")
+    plt.savefig(f"plot/image/avg_purify_time.png")
+    plt.close()
+
+def max_purify_time(ans,memory,node,th):
+    xsticks = []
+    for i in range(len(memory)):
+        new_arr = []
+        for j in range(2):
+            new_arr.append(str(memory[i][j]))
+        xsticks.append("-".join(new_arr))
+
+    for i in range(len(ans)):
+        plt.plot(xsticks, ans[i], color="black")
+        plt.plot(
+            xsticks,
+            ans[i],
+            marker=marker[i],
+            color=color[i],
+            markerfacecolor="none",
+            label=name[i],
+        )
+
+    plt.xticks(xsticks)
+    plt.xlabel("memory")
+    plt.title("average purify times")
+    plt.legend(loc="upper right")
+    plt.savefig(f"plot/image/max_purify_time.png")
     plt.close()
 
 

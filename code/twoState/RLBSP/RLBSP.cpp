@@ -235,8 +235,8 @@ protected:
     if (cur == d) {
       // cout << "Fidelity : " << exp(-c1) << " " << "Probability : " <<
       // exp(-c2) << endl; printPath(v);
-      //  dfsAns.push_back({exp(-c1), exp(-c2)});
-      dfsAns.push_back({c1, c2});
+      dfsAns.push_back({exp(-c1), exp(-c2)});
+      //dfsAns.push_back({c1, c2});
       return;
     }
     for (auto &nxt : cur->neighbor) {
