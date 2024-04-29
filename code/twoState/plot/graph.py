@@ -8,10 +8,10 @@ import collections
 
 marker = ["o", "*", "s", "x", "+"]
 color = ["r", "g", "b", "c", "m"]
-name = ["Ours_0.5", "Ours_0.7", "Ours_0.99", "Q-Path", "Q-Leap"]
+name = ["Ours_0.5", "Ours_0.7", "Ours_0.9", "Q-Path", "Q-Leap"]
 
 
-def ans_point(ans, filename, th, x=1.0, y=1.0):
+def ans_point(ans, filename, th, x=0.5, y=1.0):
     mx_x, mx_y = x, y
     st = set()
     for i, solve in enumerate(ans):

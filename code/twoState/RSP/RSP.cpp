@@ -8,19 +8,24 @@ using t = tuple<double, double, Node *>;
 
 class RSP_Algo {
 public:
-  RSP_Algo(string name, double threshold, double eps, double beta) {
+  RSP_Algo(string name, double threshold, double delta, double beta) {
     this->filename = name;
     this->threshold = threshold;
     this->beta = beta;
-    this->eps = eps;
+    this->delta = delta;
   }
   void run() {
     auto start = chrono::high_resolution_clock::now();
     buildGraph(filename);
     Node *src = getNode(0, 0), *dst = getNode(-1, -1);
 
-    SEA(src,dst,eps);
-    //RSP(src, dst, 1, node_number, eps);
+    // double xpf = shortestPath1(src, dst);
+    // eps = -ln(1.0 - delta) / xpf;
+    eps = delta;
+    // cout << eps << endl;
+
+    SEA(src, dst, eps);
+    // RSP(src, dst, 1, node_number, eps);
     auto end = chrono::high_resolution_clock::now();
     auto diff = end - start;
     double time = chrono::duration<double>(diff).count();
@@ -33,6 +38,7 @@ protected:
   double threshold;
   double beta;
   double eps;
+  double delta;
   vector<double> x, y;          // 點的x,y座標
   vector<double> memory;        // 單點的memory
   vector<double> swapping_prob; // 每個點做swapping的機率
@@ -111,13 +117,14 @@ protected:
             if (j == (n - 1)) {
               s->neighbor.push_back(path(-ln(curFidelity), -ln(curProb), d));
               d->parent.push_back(path(-ln(curFidelity), -ln(curProb), s));
-              edgeSet.push_back({-ln(curFidelity),-ln(curProb),s,d});
+              edgeSet.push_back({-ln(curFidelity), -ln(curProb), s, d});
             } else {
               s->neighbor.push_back(
                   path(-ln(curFidelity), -ln(curProb * swapping_prob[j]), d));
               d->parent.push_back(
                   path(-ln(curFidelity), -ln(curProb * swapping_prob[j]), s));
-              edgeSet.push_back({-ln(curFidelity),-ln(curProb * swapping_prob[j]),s,d});
+              edgeSet.push_back(
+                  {-ln(curFidelity), -ln(curProb * swapping_prob[j]), s, d});
               // s->neighbor.push_back(path(-ln(curFidelity), -ln(curProb *
               // swapping_prob[j]), d));
               // d->parent.push_back(path(-ln(curFidelity), -ln(curProb *
@@ -179,7 +186,7 @@ protected:
 
   void write_path_info(double time) {
     ofstream ofs;
-    ofs.open("output/RSP" + to_string(eps).substr(0, 4) + ".txt");
+    ofs.open("output/RSP" + to_string(delta).substr(0, 4) + ".txt");
     if (!ofs.is_open()) {
       cout << "error to open output.txt" << endl;
       return;
@@ -233,7 +240,9 @@ protected:
             double rounded_cost = floor(cost / S) + 1;
             if (rounded_cost > i)
               continue;
-            if ((dp[p][i - rounded_cost] + delay) < dp[v][i]) {
+            if (dp.find(p) != dp.end() &&
+                dp[p].find(i - rounded_cost) != dp[p].end() &&
+                (dp[p][i - rounded_cost] + delay) < dp[v][i]) {
               dp[v][i] = min(dp[v][i], dp[p][i - rounded_cost] + delay);
               parent[v][i] = {p, i - rounded_cost, cost};
             }
@@ -241,6 +250,7 @@ protected:
         }
       }
 
+      // cout << dp[d][i] << endl;
       if (dp[d][i] <= -ln(threshold)) {
         vector<Node *> path;
         double cost = 0;
@@ -268,8 +278,8 @@ protected:
     SPPP(s, d, B_L, 2 * B_U, eps);
   }
 
-  double shortestPath(Node*s, Node*d,double limit){
-    unordered_map<Node*,array<double,2>> dist;
+  double shortestPath(Node *s, Node *d, double limit = DBL_MAX) {
+    unordered_map<Node *, array<double, 2>> dist;
     dist[s] = {0, 0};
 
     priority_queue<t, vector<t>, greater<t>> pq;
@@ -280,15 +290,20 @@ protected:
       double c1 = get<0>(temp), c2 = get<1>(temp);
       Node *cur = get<2>(temp);
 
-      if (c1 != dist[cur][0] && c2 != dist[cur][1])
+      if (c1 != dist[cur][0] || c2 != dist[cur][1])
         continue;
 
       for (auto &nxt : cur->neighbor) {
         Node *nxtNode = nxt.node;
-        if (nxt.fidelity > limit)
+        if (nxt.fidelity > limit) {
           continue;
-        if ((c1 + nxt.fidelity) <= dist[nxtNode][0]) {
-          if (c1 + nxt.fidelity < dist[nxtNode][0]) {
+        }
+        if (dist.find(nxtNode) == dist.end() ||
+            (c1 + nxt.fidelity) <= dist[nxtNode][0]) {
+          if (dist.find(nxtNode) == dist.end()) {
+            dist[nxtNode] = {c1 + nxt.fidelity, c2 + nxt.prob};
+            pq.push({dist[nxtNode][0], dist[nxtNode][1], nxtNode});
+          } else if (c1 + nxt.fidelity < dist[nxtNode][0]) {
             dist[nxtNode] = {c1 + nxt.fidelity, c2 + nxt.prob};
             pq.push({dist[nxtNode][0], dist[nxtNode][1], nxtNode});
           } else if (c2 + nxt.prob < dist[nxtNode][1]) {
@@ -298,28 +313,67 @@ protected:
         }
       }
     }
+
     if (dist.find(d) != dist.end())
       return dist[d][0];
     return DBL_MAX;
   }
 
-  void SEA(Node* s,Node *d,double eps){
-    sort(edgeSet.begin(),edgeSet.end(),[](const path &a, const path &b){
-      return a.fidelity < b.fidelity;
-    });
+  double shortestPath1(Node *s, Node *d) {
+    unordered_map<Node *, array<double, 2>> dist;
+    dist[s] = {0, 0};
+
+    priority_queue<t, vector<t>, greater<t>> pq;
+    pq.push({0, 0, s});
+    while (!pq.empty()) {
+      t temp = pq.top();
+      pq.pop();
+      double c1 = get<0>(temp), c2 = get<1>(temp);
+      Node *cur = get<2>(temp);
+
+      if (c1 != dist[cur][0] || c2 != dist[cur][1])
+        continue;
+
+      for (auto &nxt : cur->neighbor) {
+        Node *nxtNode = nxt.node;
+        if (dist.find(nxtNode) == dist.end() ||
+            (c1 + nxt.fidelity) <= dist[nxtNode][0]) {
+          if (dist.find(nxtNode) == dist.end()) {
+            dist[nxtNode] = {c1 + nxt.fidelity, c2 + nxt.prob};
+            pq.push({dist[nxtNode][0], dist[nxtNode][1], nxtNode});
+          } else if (c1 + nxt.fidelity < dist[nxtNode][0]) {
+            dist[nxtNode] = {c1 + nxt.fidelity, c2 + nxt.prob};
+            pq.push({dist[nxtNode][0], dist[nxtNode][1], nxtNode});
+          } else if (c2 + nxt.prob < dist[nxtNode][1]) {
+            dist[nxtNode] = {c1 + nxt.fidelity, c2 + nxt.prob};
+            pq.push({dist[nxtNode][0], dist[nxtNode][1], nxtNode});
+          }
+        }
+      }
+    }
+
+    if (dist.find(d) != dist.end())
+      return dist[d][1];
+    return DBL_MAX;
+  }
+
+  void SEA(Node *s, Node *d, double eps) {
+    sort(edgeSet.begin(), edgeSet.end(),
+         [](const path &a, const path &b) { return a.fidelity < b.fidelity; });
     int l = edgeSet.size();
-    int low = 0, high = l-1;
-    while(low < (high - 1)){
-      int j = (high + low) / 2;
-      if (shortestPath(s,d,edgeSet[j].fidelity) <= -ln(threshold))
+    double low = 0, high = l;
+    while (low < (high - 1)) {
+      int j = floor((high + low) / 2);
+      double sp = shortestPath(s, d, edgeSet[j].fidelity);
+      if (sp < -ln(threshold))
         high = j;
       else
         low = j;
     }
 
-    double LB,UB; 
-    LB = edgeSet[high].fidelity, UB = node_number * edgeSet[high].fidelity;
-    RSP(s,d,LB,UB,eps);
+    double LB, UB;
+    LB = edgeSet[high].prob, UB = node_number * edgeSet[high].prob;
+    RSP(s, d, LB, UB, eps);
   }
 };
 
