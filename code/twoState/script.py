@@ -518,15 +518,14 @@ if __name__ == "__main__":
     node_num = []
     for i in range(1, len(sys.argv)):
         node_num.append(sys.argv[i])
-    # print_diffNode_prob(node_num)
+    print_diffNode_prob(node_num)
 
-    average_time = 5
+    average_time = 50
     swap_prob_list = [0.8, 0.85, 0.9, 0.95, 1]
     th_list = [0.7, 0.75, 0.8, 0.85, 0.9]
     th = 0.8
     swap_prob = 0.85
     average_node = 15
-    """
     for th in th_list:
         print_average_in_different_nodes([5, 10, 15, 20, 25], average_time, th)
         print_answer_in_different_memory(
@@ -542,6 +541,5 @@ if __name__ == "__main__":
         average_node, th, swap_prob, average_time, [[8, 10], [11, 13], [14, 16]]
     )
     avg_entangle_dis(average_node, th, swap_prob, [15, 50, 80])
-    """
 
     avg_purify_dis(average_node, th, swap_prob, [15, 50, 80], average_time)
