@@ -8,7 +8,7 @@ import collections
 
 marker = ["o", "*", "s", "x", "+"]
 color = ["r", "g", "b", "c", "m"]
-name = ["Ours_0.7", "Ours_0.9", "Q-Path", "Q-Leap"]
+name = ["Ours_0.7", "Q-Path", "Q-Leap"]
 
 
 def ans_point(ans, filename, th, x=0.5, y=1.0):
@@ -31,7 +31,7 @@ def ans_point(ans, filename, th, x=0.5, y=1.0):
     fig, ax = plt.subplots()
     plt.xlabel("fidelity")
     plt.ylabel("probability")
-    plt.xlim(0, mx_x)
+    plt.xlim(0.5, mx_x)
     plt.ylim(0, mx_y)
     plt.scatter(point_x, point_y, color="grey", label="_nolegend_")
     for i, solve in enumerate(ans):
@@ -82,7 +82,7 @@ def different_threshold(y, threshold, n):
 
     plt.xticks(threshold)
     plt.xlabel("Fidelity threshold")
-    plt.ylabel("Probability")
+    plt.ylabel("avg. probability")
     # plt.title("Different threshold")
     plt.subplots_adjust(top=0.75)
     plt.subplots_adjust(left=0.2)
