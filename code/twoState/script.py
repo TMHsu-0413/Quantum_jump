@@ -100,7 +100,7 @@ def modify_y_label(filename, y):
                 j += 1
 
 
-def print_diffNode_prob(node):
+def print_diffNode_prob(node, times):
     # 依照node array各生成一張圖，印出prob，執行時間
     qPath = defaultdict(lambda: defaultdict(list))
     qLeap = defaultdict(lambda: defaultdict(list))
@@ -109,55 +109,54 @@ def print_diffNode_prob(node):
     rsp_9 = defaultdict(lambda: defaultdict(list))
 
     for n in node:
-        number_of_nodes = str(n)
-        subprocess.run(
-            [
-                "python3",
-                "main.py",
-                "graph.txt",
-                number_of_nodes,
-                "5",
-                "9",
-                "0.3",
-                "0.5",
-                "0.5",
-            ]
-        )
-        number_of_nodes = int(number_of_nodes)
-
         threshold = [0.7, 0.75, 0.8, 0.85, 0.9]
-        for idx, th in enumerate(threshold):
-            compile_and_run("graph.txt", th)
+        rsp_5sum, rsp_7sum, rsp_9sum, qPathsum, qLeapsum = (
+            [0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0],
+        )
+        for _ in range(times):
+            subprocess.run(
+                [
+                    "python3",
+                    "main.py",
+                    "graph.txt",
+                    str(n),
+                    "5",
+                    "9",
+                    "0.3",
+                    "0.5",
+                    "0.5",
+                ]
+            )
+            number_of_nodes = int(n)
 
-            readResult(qPath, number_of_nodes, "qPath")
-            readResult(qLeap, number_of_nodes, "qLeap")
-            # readResult(rLbsp, number_of_nodes, "RLBSP")
-            readResult(rsp_5, number_of_nodes, "RSP", "0.50")
-            readResult(rsp_7, number_of_nodes, "RSP", "0.70")
-            readResult(rsp_9, number_of_nodes, "RSP", "0.90")
+            for idx, th in enumerate(threshold):
+                compile_and_run("graph.txt", th)
+
+                readResult(qPath, number_of_nodes, "qPath")
+                readResult(qLeap, number_of_nodes, "qLeap")
+                # readResult(rLbsp, number_of_nodes, "RLBSP")
+                readResult(rsp_5, number_of_nodes, "RSP", "0.50")
+                readResult(rsp_7, number_of_nodes, "RSP", "0.70")
+                readResult(rsp_9, number_of_nodes, "RSP", "0.90")
+
+                rsp_5sum[idx] += rsp_5["Probability"][number_of_nodes][-1]
+                rsp_7sum[idx] += rsp_7["Probability"][number_of_nodes][-1]
+                rsp_9sum[idx] += rsp_9["Probability"][number_of_nodes][-1]
+                qPathsum[idx] += qPath["Probability"][number_of_nodes][-1]
+                qLeapsum[idx] += qLeap["Probability"][number_of_nodes][-1]
 
         graph.different_threshold(
-            [
-                list(rsp_5["Probability"][number_of_nodes]),
-                list(rsp_7["Probability"][number_of_nodes]),
-                list(rsp_9["Probability"][number_of_nodes]),
-                # list(rLbsp["Probability"][number_of_nodes]),
-                list(qPath["Probability"][number_of_nodes]),
-                list(qLeap["Probability"][number_of_nodes]),
-            ],
+            [rsp_5sum, rsp_7sum, rsp_9sum, qPathsum, qLeapsum],
             threshold,
-            number_of_nodes,
+            n,
         )
         graph.execution_time_on_different_threshold(
-            [
-                rsp_5["Time"][number_of_nodes],
-                rsp_7["Time"][number_of_nodes],
-                rsp_9["Time"][number_of_nodes],
-                # rLbsp["Time"][number_of_nodes],
-                qPath["Time"][number_of_nodes],
-                qLeap["Time"][number_of_nodes],
-            ],
-            number_of_nodes,
+            [rsp_5sum, rsp_7sum, rsp_9sum, qPathsum, qLeapsum],
+            n,
             threshold,
         )
     # print_etodn(rsp_7,rsp_9,rsp_99, qPath, qLeap, node)
@@ -519,7 +518,7 @@ if __name__ == "__main__":
     node_num = []
     for i in range(1, len(sys.argv)):
         node_num.append(sys.argv[i])
-    print_diffNode_prob(node_num)
+    print_diffNode_prob(node_num, 10)
 
     average_time = 1
     swap_prob_list = [0.1, 0.2, 0.3, 0.4, 0.5]
@@ -527,6 +526,8 @@ if __name__ == "__main__":
     th = 0.8
     swap_prob = 0.5
     average_node = 3
+
+    """
     for th in th_list:
         print_average_in_different_nodes([5, 10, 15, 20, 25], average_time, th)
         print_answer_in_different_memory(
@@ -544,3 +545,4 @@ if __name__ == "__main__":
     avg_entangle_dis(average_node, th, swap_prob, [20, 30, 40])
 
     avg_purify_dis(average_node, th, swap_prob, [20, 30, 40], average_time)
+    """

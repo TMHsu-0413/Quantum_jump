@@ -19,10 +19,9 @@ public:
     buildGraph(filename);
     Node *src = getNode(0, 0), *dst = getNode(-1, -1);
 
-    // double xpf = shortestPath1(src, dst);
-    // eps = -ln(1.0 - delta) / xpf;
-    eps = delta;
-    // cout << eps << endl;
+    double xpf = shortestPath1(src, dst);
+    eps = -ln(1.0 - delta) / xpf;
+    cout << eps << endl;
 
     SEA(src, dst, eps);
     // RSP(src, dst, 1, node_number, eps);
@@ -295,7 +294,7 @@ protected:
 
       for (auto &nxt : cur->neighbor) {
         Node *nxtNode = nxt.node;
-        if (nxt.fidelity > limit) {
+        if (nxt.prob > limit) {
           continue;
         }
         if (dist.find(nxtNode) == dist.end() ||
@@ -359,12 +358,12 @@ protected:
 
   void SEA(Node *s, Node *d, double eps) {
     sort(edgeSet.begin(), edgeSet.end(),
-         [](const path &a, const path &b) { return a.fidelity < b.fidelity; });
+         [](const path &a, const path &b) { return a.prob < b.prob; });
     int l = edgeSet.size();
     double low = 0, high = l;
     while (low < (high - 1)) {
       int j = floor((high + low) / 2);
-      double sp = shortestPath(s, d, edgeSet[j].fidelity);
+      double sp = shortestPath(s, d, edgeSet[j].prob);
       if (sp < -ln(threshold))
         high = j;
       else
