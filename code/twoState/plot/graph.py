@@ -6,9 +6,17 @@ import matplotlib.pyplot as plt
 import numpy as np
 import collections
 
-marker = ["o", "*", "s", "x", "+"]
+marker = ["o", "v", "s", "x", "+"]
 color = ["r", "g", "b", "c", "m"]
 name = ["Ours_0.7", "Q-Path", "Q-Leap"]
+
+fontsize = 32
+Xlabel_fontsize = fontsize
+Ylabel_fontsize = fontsize
+Xticks_fontsize = fontsize
+Yticks_fontsize = fontsize
+
+plt.rcParams["figure.figsize"] = (7, 7)
 
 
 def ans_point(ans, filename, th, x=0.5, y=1.0):
@@ -28,37 +36,38 @@ def ans_point(ans, filename, th, x=0.5, y=1.0):
             point_y.append(float(data[1]))
             mx_x = max(mx_x, float(data[0]))
             mx_y = max(mx_y, float(data[1]))
-    fig, ax = plt.subplots()
-    plt.xlabel("fidelity")
-    plt.ylabel("probability")
+    plt.xlabel("Fidelity", fontsize=Xlabel_fontsize, labelpad=10)
+    plt.ylabel("Probability", fontsize=Ylabel_fontsize, labelpad=35)
+    plt.xticks(fontsize=Xticks_fontsize - 3, rotation=45)
+    plt.yticks(fontsize=Yticks_fontsize)
+    # plt.title("Different threshold")
     plt.xlim(0.5, mx_x)
     plt.ylim(0, mx_y)
     plt.scatter(point_x, point_y, color="grey", label="_nolegend_")
     for i, solve in enumerate(ans):
         x, y = solve[0], solve[1]
-        plt.scatter(x, y, color=color[i], marker=marker[i], label=name[i])
+        plt.plot(x, y, color=color[i], marker=marker[i], label=name[i], markersize=12)
     plt.vlines(x=th, ymin=0, ymax=1, linestyles="dashed", colors="red")
     plt.subplots_adjust(top=0.75)
-    plt.subplots_adjust(left=0.2)
-    plt.subplots_adjust(right=0.8)
+    plt.subplots_adjust(left=0.3)
+    plt.subplots_adjust(right=0.95)
     plt.subplots_adjust(bottom=0.25)
     plt.legend(
         name,
         loc=10,
-        bbox_to_anchor=(0.5, 1.25),
-        prop={"size": 16, "family": "Times New Roman"},
+        bbox_to_anchor=(0.4, 1.25),
+        prop={"size": fontsize, "family": "Times New Roman"},
         frameon=False,
         labelspacing=0.2,
         handletextpad=0.2,
         columnspacing=0.2,
-        ncol=3,
+        ncol=2,
         facecolor=None,
     )
     img_dir = os.path.dirname(__file__) + "/image/"
     plt.savefig(img_dir + "ans_scatter.png")
     plt.close()
     return mx_x, mx_y
-    # plt.savefig('2d_graph.png')
 
 
 def different_threshold(y, threshold, n):
@@ -77,27 +86,29 @@ def different_threshold(y, threshold, n):
             color=color[i],
             markerfacecolor="none",
             linestyle="-",
+            markersize=15,
+            markeredgewidth=2.5,
             label=name[i],
         )
-
     plt.xticks(threshold)
-    plt.xlabel("Fidelity threshold")
-    plt.ylabel("avg. probability")
-    # plt.title("Different threshold")
+    plt.xlabel("Fidelity threshold", fontsize=Xlabel_fontsize, labelpad=10)
+    plt.ylabel("avg. probability", fontsize=Ylabel_fontsize, labelpad=35)
+    plt.xticks(fontsize=Xticks_fontsize - 3, rotation=45, ha="right")
+    plt.yticks(fontsize=Yticks_fontsize)
     plt.subplots_adjust(top=0.75)
-    plt.subplots_adjust(left=0.2)
-    plt.subplots_adjust(right=0.8)
+    plt.subplots_adjust(left=0.3)
+    plt.subplots_adjust(right=0.95)
     plt.subplots_adjust(bottom=0.25)
     plt.legend(
         name,
         loc=10,
-        bbox_to_anchor=(0.5, 1.25),
-        prop={"size": 16, "family": "Times New Roman"},
+        bbox_to_anchor=(0.4, 1.25),
+        prop={"size": fontsize, "family": "Times New Roman"},
         frameon=False,
         labelspacing=0.2,
         handletextpad=0.2,
         columnspacing=0.2,
-        ncol=3,
+        ncol=2,
         facecolor=None,
     )
 
@@ -115,25 +126,28 @@ def execution_time_on_different_threshold(time, n, threshold):
             markerfacecolor="none",
             label=name[i],
             linestyle="-",
+            markersize=15,
+            markeredgewidth=2.5,
         )
-
     plt.xticks(threshold)
-    plt.xlabel("threshold")
-    plt.ylabel("second")
+    plt.xlabel("Fidelity threshold", fontsize=Xlabel_fontsize, labelpad=10)
+    plt.ylabel("second", fontsize=Ylabel_fontsize, labelpad=35)
+    plt.xticks(fontsize=Xticks_fontsize)
+    plt.yticks(fontsize=Yticks_fontsize)
     plt.subplots_adjust(top=0.75)
-    plt.subplots_adjust(left=0.2)
+    plt.subplots_adjust(left=0.3)
     plt.subplots_adjust(right=0.8)
     plt.subplots_adjust(bottom=0.25)
     plt.legend(
         name,
         loc=10,
-        bbox_to_anchor=(0.5, 1.25),
-        prop={"size": 16, "family": "Times New Roman"},
+        bbox_to_anchor=(0.4, 1.25),
+        prop={"size": fontsize, "family": "Times New Roman"},
         frameon=False,
         labelspacing=0.2,
         handletextpad=0.2,
         columnspacing=0.2,
-        ncol=3,
+        ncol=2,
         facecolor=None,
     )
     plt.savefig(f"plot/image/time_on_{n}_nodes_with_different_threshold.png")
@@ -150,11 +164,15 @@ def execution_time_on_different_node(time, n):
             markerfacecolor="none",
             label=name[i],
             linestyle="-",
+            markersize=15,
+            markeredgewidth=2.5,
         )
 
     plt.xticks(n)
-    plt.xlabel("the number of nodes")
-    plt.ylabel("second")
+    plt.xlabel("# Nodes", fontsize=Xlabel_fontsize, labelpad=10)
+    plt.ylabel("second", fontsize=Ylabel_fontsize, labelpad=35)
+    plt.xticks(fontsize=Xticks_fontsize)
+    plt.yticks(fontsize=Yticks_fontsize)
     plt.subplots_adjust(top=0.75)
     plt.subplots_adjust(left=0.2)
     plt.subplots_adjust(right=0.8)
@@ -162,13 +180,13 @@ def execution_time_on_different_node(time, n):
     plt.legend(
         name,
         loc=10,
-        bbox_to_anchor=(0.5, 1.25),
-        prop={"size": 16, "family": "Times New Roman"},
+        bbox_to_anchor=(0.4, 1.25),
+        prop={"size": fontsize, "family": "Times New Roman"},
         frameon=False,
         labelspacing=0.2,
         handletextpad=0.2,
         columnspacing=0.2,
-        ncol=3,
+        ncol=2,
         facecolor=None,
     )
     plt.savefig(f"plot/image/time_on_different_nodes.png")
@@ -185,25 +203,29 @@ def find_answer_rate(time, n, th):
             markerfacecolor="none",
             label=name[i],
             linestyle="-",
+            markersize=15,
+            markeredgewidth=2.5,
         )
 
     plt.xticks(n)
-    plt.xlabel("the number of nodes")
-    plt.ylabel("%")
+    plt.xlabel("# Nodes", fontsize=Xlabel_fontsize, labelpad=10)
+    plt.ylabel("%", fontsize=Ylabel_fontsize, labelpad=35)
+    plt.xticks(fontsize=Xticks_fontsize)
+    plt.yticks(fontsize=Yticks_fontsize)
     plt.subplots_adjust(top=0.75)
-    plt.subplots_adjust(left=0.2)
+    plt.subplots_adjust(left=0.3)
     plt.subplots_adjust(right=0.8)
     plt.subplots_adjust(bottom=0.25)
     plt.legend(
         name,
         loc=10,
-        bbox_to_anchor=(0.5, 1.25),
-        prop={"size": 16, "family": "Times New Roman"},
+        bbox_to_anchor=(0.4, 1.25),
+        prop={"size": fontsize, "family": "Times New Roman"},
         frameon=False,
         labelspacing=0.2,
         handletextpad=0.2,
         columnspacing=0.2,
-        ncol=3,
+        ncol=2,
         facecolor=None,
     )
     plt.savefig(f"plot/image/find_rate_{th}threshold.png")
@@ -227,25 +249,29 @@ def find_diff_memory(ans, mem, node, th):
             markerfacecolor="none",
             label=name[i],
             linestyle="-",
+            markersize=15,
+            markeredgewidth=2.5,
         )
 
     plt.xticks(xsticks)
-    plt.xlabel("the number of memorys")
-    plt.ylabel("%")
+    plt.xlabel("# Memorys", fontsize=Xlabel_fontsize, labelpad=10)
+    plt.ylabel("%", fontsize=Ylabel_fontsize, labelpad=35)
+    plt.xticks(fontsize=Xticks_fontsize - 3, rotation=45, ha="right")
+    plt.yticks(fontsize=Yticks_fontsize)
     plt.subplots_adjust(top=0.75)
-    plt.subplots_adjust(left=0.2)
+    plt.subplots_adjust(left=0.3)
     plt.subplots_adjust(right=0.8)
     plt.subplots_adjust(bottom=0.25)
     plt.legend(
         name,
         loc=10,
-        bbox_to_anchor=(0.5, 1.25),
-        prop={"size": 16, "family": "Times New Roman"},
+        bbox_to_anchor=(0.4, 1.25),
+        prop={"size": fontsize, "family": "Times New Roman"},
         frameon=False,
         labelspacing=0.2,
         handletextpad=0.2,
         columnspacing=0.2,
-        ncol=3,
+        ncol=2,
         facecolor=None,
     )
     plt.savefig(f"plot/image/find_rate_{th}threshold_{node}nodes.png")
@@ -262,24 +288,29 @@ def find_diff_swapProb(ans, prob, node, th):
             markerfacecolor="none",
             label=name[i],
             linestyle="-",
+            markersize=15,
+            markeredgewidth=2.5,
         )
 
     plt.xticks(prob)
-    plt.xlabel("swapping prob.")
+    plt.xlabel("swap prob.", fontsize=Xlabel_fontsize, labelpad=10)
+    plt.ylabel("Probability", fontsize=Ylabel_fontsize, labelpad=35)
+    plt.xticks(fontsize=Xticks_fontsize)
+    plt.yticks(fontsize=Yticks_fontsize)
     plt.subplots_adjust(top=0.75)
-    plt.subplots_adjust(left=0.2)
-    plt.subplots_adjust(right=0.8)
+    plt.subplots_adjust(left=0.3)
+    plt.subplots_adjust(right=0.95)
     plt.subplots_adjust(bottom=0.25)
     plt.legend(
         name,
         loc=10,
-        bbox_to_anchor=(0.5, 1.25),
-        prop={"size": 16, "family": "Times New Roman"},
+        bbox_to_anchor=(0.4, 1.25),
+        prop={"size": fontsize, "family": "Times New Roman"},
         frameon=False,
         labelspacing=0.2,
         handletextpad=0.2,
         columnspacing=0.2,
-        ncol=3,
+        ncol=2,
         facecolor=None,
     )
     plt.savefig(f"plot/image/diff_prob.png")
@@ -303,24 +334,29 @@ def avg_purify_time(ans, memory, node, th):
             markerfacecolor="none",
             label=name[i],
             linestyle="-",
+            markersize=15,
+            markeredgewidth=2.5,
         )
 
     plt.xticks(xsticks)
-    plt.xlabel("memory")
+    plt.xlabel("# Memorys", fontsize=Xlabel_fontsize, labelpad=10)
+    plt.ylabel("avg. purify time", fontsize=Ylabel_fontsize, labelpad=35)
+    plt.xticks(fontsize=Xticks_fontsize - 3, rotation=45, ha="right")
+    plt.yticks(fontsize=Yticks_fontsize)
     plt.subplots_adjust(top=0.75)
-    plt.subplots_adjust(left=0.2)
-    plt.subplots_adjust(right=0.8)
+    plt.subplots_adjust(left=0.3)
+    plt.subplots_adjust(right=0.95)
     plt.subplots_adjust(bottom=0.25)
     plt.legend(
         name,
         loc=10,
-        bbox_to_anchor=(0.5, 1.25),
-        prop={"size": 16, "family": "Times New Roman"},
+        bbox_to_anchor=(0.4, 1.25),
+        prop={"size": fontsize, "family": "Times New Roman"},
         frameon=False,
         labelspacing=0.2,
         handletextpad=0.2,
         columnspacing=0.2,
-        ncol=3,
+        ncol=2,
         facecolor=None,
     )
     plt.savefig(f"plot/image/avg_purify_time.png")
@@ -344,24 +380,29 @@ def max_purify_time(ans, memory, node, th):
             markerfacecolor="none",
             label=name[i],
             linestyle="-",
+            markersize=15,
+            markeredgewidth=2.5,
         )
 
     plt.xticks(xsticks)
-    plt.xlabel("memory")
+    plt.xlabel("# Memorys", fontsize=Xlabel_fontsize, labelpad=10)
+    plt.ylabel("avg. purify time", fontsize=Ylabel_fontsize, labelpad=35)
+    plt.xticks(fontsize=Xticks_fontsize)
+    plt.yticks(fontsize=Yticks_fontsize)
     plt.subplots_adjust(top=0.75)
-    plt.subplots_adjust(left=0.2)
-    plt.subplots_adjust(right=0.8)
+    plt.subplots_adjust(left=0.3)
+    plt.subplots_adjust(right=0.95)
     plt.subplots_adjust(bottom=0.25)
     plt.legend(
         name,
         loc=10,
-        bbox_to_anchor=(0.5, 1.25),
-        prop={"size": 16, "family": "Times New Roman"},
+        bbox_to_anchor=(0.4, 1.25),
+        prop={"size": fontsize, "family": "Times New Roman"},
         frameon=False,
         labelspacing=0.2,
         handletextpad=0.2,
         columnspacing=0.2,
-        ncol=3,
+        ncol=2,
         facecolor=None,
     )
     plt.savefig(f"plot/image/max_purify_time.png")
@@ -385,24 +426,29 @@ def avg_entangle_dis(ans, dis, node, th):
             markerfacecolor="none",
             label=name[i],
             linestyle="-",
+            markersize=15,
+            markeredgewidth=2.5,
         )
 
     plt.xticks(xsticks)
-    plt.xlabel("distance")
+    plt.xlabel("distance", fontsize=Xlabel_fontsize, labelpad=10)
+    plt.ylabel("avg. purify time", fontsize=Ylabel_fontsize, labelpad=35)
+    plt.xticks(fontsize=Xticks_fontsize - 3, rotation=45, ha="right")
+    plt.yticks(fontsize=Yticks_fontsize)
     plt.subplots_adjust(top=0.75)
-    plt.subplots_adjust(left=0.2)
-    plt.subplots_adjust(right=0.8)
+    plt.subplots_adjust(left=0.3)
+    plt.subplots_adjust(right=0.95)
     plt.subplots_adjust(bottom=0.25)
     plt.legend(
         name,
         loc=10,
-        bbox_to_anchor=(0.5, 1.25),
-        prop={"size": 16, "family": "Times New Roman"},
+        bbox_to_anchor=(0.4, 1.25),
+        prop={"size": fontsize, "family": "Times New Roman"},
         frameon=False,
         labelspacing=0.2,
         handletextpad=0.2,
         columnspacing=0.2,
-        ncol=3,
+        ncol=2,
         facecolor=None,
     )
     plt.savefig(f"plot/image/avg_entangle_dis.png")
@@ -426,24 +472,29 @@ def avg_purifyTime_dis(ans, dis, node, th):
             markerfacecolor="none",
             label=name[i],
             linestyle="-",
+            markersize=15,
+            markeredgewidth=2.5,
         )
 
     plt.xticks(xsticks)
-    plt.xlabel("distance")
+    plt.xlabel("distance", fontsize=Xlabel_fontsize, labelpad=10)
+    plt.ylabel("avg. purify time", fontsize=Ylabel_fontsize, labelpad=35)
+    plt.xticks(fontsize=Xticks_fontsize - 3, rotation=45, ha="right")
+    plt.yticks(fontsize=Yticks_fontsize)
     plt.subplots_adjust(top=0.75)
-    plt.subplots_adjust(left=0.2)
-    plt.subplots_adjust(right=0.8)
+    plt.subplots_adjust(left=0.3)
+    plt.subplots_adjust(right=0.95)
     plt.subplots_adjust(bottom=0.25)
     plt.legend(
         name,
         loc=10,
-        bbox_to_anchor=(0.5, 1.25),
-        prop={"size": 16, "family": "Times New Roman"},
+        bbox_to_anchor=(0.4, 1.25),
+        prop={"size": fontsize, "family": "Times New Roman"},
         frameon=False,
         labelspacing=0.2,
         handletextpad=0.2,
         columnspacing=0.2,
-        ncol=3,
+        ncol=2,
         facecolor=None,
     )
     plt.savefig(f"plot/image/avg_purifyTime_dis.png")
