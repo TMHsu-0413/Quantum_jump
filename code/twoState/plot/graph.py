@@ -8,7 +8,7 @@ import collections
 
 marker = ["o", "v", "s", "x", "+"]
 color = ["r", "g", "b", "c", "m"]
-name = ["Ours_0.7", "Q-Path", "Q-Leap"]
+name = ["Ours", "Q-Path", "Q-Leap"]
 
 fontsize = 32
 Xlabel_fontsize = fontsize
@@ -111,7 +111,6 @@ def different_threshold(y, threshold, n):
         ncol=2,
         facecolor=None,
     )
-
     plt.savefig(f"plot/image/different_threshold_on_{n}_nodes")
     plt.close()
 
@@ -432,7 +431,7 @@ def avg_entangle_dis(ans, dis, node, th):
 
     plt.xticks(xsticks)
     plt.xlabel("distance", fontsize=Xlabel_fontsize, labelpad=10)
-    plt.ylabel("avg. purify time", fontsize=Ylabel_fontsize, labelpad=35)
+    plt.ylabel("Probability", fontsize=Ylabel_fontsize, labelpad=35)
     plt.xticks(fontsize=Xticks_fontsize - 3, rotation=45, ha="right")
     plt.yticks(fontsize=Yticks_fontsize)
     plt.subplots_adjust(top=0.75)

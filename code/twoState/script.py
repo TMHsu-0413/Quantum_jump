@@ -160,6 +160,10 @@ def print_diffNode_prob(node, times):
             threshold,
             n,
         )
+
+        f = open(f"outputTxt/different_threshold_{n}_nodes.ans", "w")
+        for i in range(len(rsp_7sum)):
+            f.write(f"{threshold[i]} {rsp_7sum[i]} {qPathsum[i]} {qLeapsum[i]} \n")
         # graph.execution_time_on_different_threshold( [rsp_7sum, rsp_9sum, qPathsum, qLeapsum], n, threshold,)
     # print_etodn(rsp_7,rsp_9,rsp_99, qPath, qLeap, node)
 
@@ -217,8 +221,10 @@ def print_average_in_different_nodes(node_num, runTime, threshold):
         ans[1].append((qPathTime / validTime) * 100)
         ans[2].append((qLeapTime / validTime) * 100)
 
-    print(ans, node_num)
     graph.find_answer_rate(ans, node_num, threshold)
+    f = open(f"outputTxt/find_answer_rate_on_{threshold}th.ans", "w")
+    for i in range(len(node_num)):
+        f.write(f"{node_num[i]} {ans[0][i]} {ans[1][i]} {ans[2][i]} \n")
 
 
 def print_answer_in_different_memory(mem, runTime, node, th):
@@ -253,6 +259,9 @@ def print_answer_in_different_memory(mem, runTime, node, th):
         ans[1].append((qPathTime / runTime) * 100)
         ans[2].append((qLeapTime / runTime) * 100)
     graph.find_diff_memory(ans, mem, node, th)
+    f = open(f"outputTxt/find_diff_memory.ans", "w")
+    for i in range(len(mem)):
+        f.write(f"{mem[i]} {ans[0][i]} {ans[1][i]} {ans[2][i]} \n")
 
 
 def print_diff_prob(swap_prob_list, th, nodes):
@@ -284,6 +293,9 @@ def print_diff_prob(swap_prob_list, th, nodes):
     ans[2] = qLeap["Probability"][nodes]
 
     graph.find_diff_swapProb(ans, swap_prob_list, nodes, th)
+    f = open(f"outputTxt/find_diff_swapProb.ans", "w")
+    for i in range(len(swap_prob_list)):
+        f.write(f"{swap_prob_list[i]} {ans[0][i]} {ans[1][i]} {ans[2][i]} \n")
 
 
 def ans_point_Scatter(node, th):
@@ -396,10 +408,13 @@ def avg_purify_time(node, th, swap_prob, times, mem):
                     maxSum[i][j] /= max_count[i][j]
 
     graph.avg_purify_time(avgSum, mem, node, th)
+    f = open("outputTxt/avg_purify_time.ans", "w")
+    for i in range(len(avgSum)):
+        f.write(f"{mem[i]} {avgSum[0][i]} {avgSum[1][i]} {avgSum[2][i]} \n")
     # graph.max_purify_time(maxSum, mem, node, th)
 
 
-def avg_entangle_dis(node, th, swap_prob, avg_dis):
+def avg_entangle_dis(node, th, swap_prob, avg_dis, times):
     def random_number_with_avg(n, avg):
         total = n * avg
         numbers = []
@@ -409,47 +424,54 @@ def avg_entangle_dis(node, th, swap_prob, avg_dis):
             total -= rand_num
         return numbers
 
-    qPath = defaultdict(lambda: defaultdict(list))
-    qLeap = defaultdict(lambda: defaultdict(list))
-    rsp_5 = defaultdict(lambda: defaultdict(list))
-    rsp_7 = defaultdict(lambda: defaultdict(list))
-    rsp_9 = defaultdict(lambda: defaultdict(list))
-    subprocess.run(
-        [
-            "python3",
-            "main.py",
-            "graph.txt",
-            str(node),
-            "5",
-            "9",
-            "0.3",
-            str(swap_prob),
-            str(swap_prob),
-        ]
-    )
+    ans = [[0, 0, 0, 0, 0] for _ in range(3)]
+    for _ in range(times):
+        qPath = defaultdict(lambda: defaultdict(list))
+        qLeap = defaultdict(lambda: defaultdict(list))
+        rsp_5 = defaultdict(lambda: defaultdict(list))
+        rsp_7 = defaultdict(lambda: defaultdict(list))
+        rsp_9 = defaultdict(lambda: defaultdict(list))
+        subprocess.run(
+            [
+                "python3",
+                "main.py",
+                "graph.txt",
+                str(node),
+                "5",
+                "9",
+                "0.3",
+                str(swap_prob),
+                str(swap_prob),
+            ]
+        )
 
-    d = random_number_with_avg(node, avg_dis[0])
-    ans = [[] for _ in range(3)]
-    for _ in range(5):
-        modify_y_label("graph.txt", d)
-        compile_and_run("graph.txt", th)
+        d = random_number_with_avg(node, avg_dis[0])
+        for j in range(5):
+            modify_y_label("graph.txt", d)
+            compile_and_run("graph.txt", th)
 
-        readResult(qPath, node, "qPath")
-        readResult(qLeap, node, "qLeap")
-        # readResult(rsp_5, node, "RSP", "0.50")
-        readResult(rsp_7, node, "RSP", "0.70")
-        # readResult(rsp_9, node, "RSP", "0.90")
+            readResult(qPath, node, "qPath")
+            readResult(qLeap, node, "qLeap")
+            # readResult(rsp_5, node, "RSP", "0.50")
+            readResult(rsp_7, node, "RSP", "0.70")
+            # readResult(rsp_9, node, "RSP", "0.90")
 
-        # ans[0].append(rsp_5["Probability"][node][-1])
-        ans[0].append(rsp_7["Probability"][node][-1])
-        # ans[1].append(rsp_9["Probability"][node][-1])
-        ans[1].append(qPath["Probability"][node][-1])
-        ans[2].append(qLeap["Probability"][node][-1])
+            # ans[0].append(rsp_5["Probability"][node][-1])
+            ans[0][j] += rsp_7["Probability"][node][-1]
+            # ans[1].append(rsp_9["Probability"][node][-1])
+            ans[1][j] += qPath["Probability"][node][-1]
+            ans[2][j] += qLeap["Probability"][node][-1]
 
-        for i in range(len(d)):
-            d[i] += 5
+            for i in range(len(d)):
+                d[i] += 5
 
+    for i in range(len(ans)):
+        for j in range(len(ans[i])):
+            ans[i][j] /= times
     graph.avg_entangle_dis(ans, avg_dis, node, th)
+    f = open("outputTxt/avg_entangle_dis.ans", "w")
+    for i in range(len(avg_dis)):
+        f.write(f"{avg_dis[i]-5}-{avg_dis[i]+5} {ans[0][i]} {ans[1][i]} {ans[2][i]} \n")
 
 
 def avg_purify_dis(node, th, swap_prob, avg_dis, times):
@@ -472,6 +494,7 @@ def avg_purify_dis(node, th, swap_prob, avg_dis, times):
             total -= rand_num
         return numbers
 
+    ans = [[0, 0, 0, 0, 0] for _ in range(3)]
     for _ in range(times):
         qPath = defaultdict(lambda: defaultdict(list))
         qLeap = defaultdict(lambda: defaultdict(list))
@@ -493,7 +516,6 @@ def avg_purify_dis(node, th, swap_prob, avg_dis, times):
         )
 
         d = random_number_with_avg(node, avg_dis[0])
-        ans = [[0, 0, 0, 0, 0] for _ in range(3)]
         for i, dis in enumerate(avg_dis):
             modify_y_label("graph.txt", d)
             compile_and_run("graph.txt", th)
@@ -512,11 +534,14 @@ def avg_purify_dis(node, th, swap_prob, avg_dis, times):
             for i in range(len(d)):
                 d[i] += 5
 
-        for i in range(len(ans)):
-            for j in range(len(ans[0])):
-                if sum_count[i][j] != 0:
-                    ans[i][j] /= sum_count[i][j]
-        graph.avg_purifyTime_dis(ans, avg_dis, node, th)
+    for i in range(len(ans)):
+        for j in range(len(ans[0])):
+            if sum_count[i][j] != 0:
+                ans[i][j] /= sum_count[i][j]
+    graph.avg_purifyTime_dis(ans, avg_dis, node, th)
+    f = open("outputTxt/avg_purifyTime_dis.ans", "w")
+    for i in range(len(avg_dis)):
+        f.write(f"{avg_dis[i]-5}-{avg_dis[i]+5} {ans[0][i]} {ans[1][i]} {ans[2][i]} \n")
 
 
 if __name__ == "__main__":
@@ -537,8 +562,8 @@ if __name__ == "__main__":
     swap_prob_list = [0.3, 0.4, 0.5, 0.6, 0.7]
     th_list = [0.7, 0.75, 0.8, 0.85, 0.9]
     th = 0.8
-    swap_prob = 0.7
-    average_node = 15
+    swap_prob = 0.8
+    average_node = 2
     for th in th_list:
         print_average_in_different_nodes([10, 12, 15, 17, 20], average_time, th)
     # print_answer_in_different_memory( [[5, 7], [8, 10], [11, 13]], average_time, average_node, th)
@@ -547,9 +572,7 @@ if __name__ == "__main__":
     ans_point_Scatter(5, 0.7)
 
     # 固定節點與swap prob，跑average_time次後取平均的purify次數
-    avg_purify_time(
-        average_node, th, swap_prob, average_time, [[8, 10], [11, 13], [14, 16]]
-    )
-    avg_entangle_dis(average_node, th, swap_prob, [10, 15, 20, 25, 30])
+    # avg_purify_time( average_node, th, swap_prob, average_time, [[8, 10], [11, 13], [14, 16]])
+    avg_entangle_dis(average_node, th, swap_prob, [10, 15, 20, 25, 30], average_time)
 
     avg_purify_dis(average_node, th, swap_prob, [10, 15, 20, 25, 30], average_time)
