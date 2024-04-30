@@ -531,21 +531,23 @@ if __name__ == "__main__":
     node_num = []
     for i in range(1, len(sys.argv)):
         node_num.append(sys.argv[i])
-    print_diffNode_prob(node_num, 1)
+    #print_diffNode_prob(node_num, 1)
 
-    average_time = 1
+    average_time = 25
     swap_prob_list = [0.3, 0.4, 0.5, 0.6, 0.7]
     th_list = [0.7, 0.75, 0.8, 0.85, 0.9]
     th = 0.8
     swap_prob = 0.7
     average_node = 15
-    for th in th_list:
-        print_average_in_different_nodes([10, 12, 15, 17, 20], average_time, th)
+    #for th in th_list:
+        #print_average_in_different_nodes([10, 12, 15, 17, 20], average_time, th)
     # print_answer_in_different_memory( [[5, 7], [8, 10], [11, 13]], average_time, average_node, th)
 
-    print_diff_prob(swap_prob_list, th, average_node)
-    ans_point_Scatter(5, 0.7)
+    #print_diff_prob(swap_prob_list, th, average_node)
+    #ans_point_Scatter(5, 0.8)
+    ans_point_Scatter(7, 0.7)
 
+    '''
     # 固定節點與swap prob，跑average_time次後取平均的purify次數
     avg_purify_time(
         average_node, th, swap_prob, average_time, [[8, 10], [11, 13], [14, 16]]
@@ -553,3 +555,4 @@ if __name__ == "__main__":
     avg_entangle_dis(average_node, th, swap_prob, [10, 15, 20, 25, 30])
 
     avg_purify_dis(average_node, th, swap_prob, [10, 15, 20, 25, 30], average_time)
+    '''

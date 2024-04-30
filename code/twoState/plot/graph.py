@@ -8,7 +8,7 @@ import collections
 
 marker = ["o", "v", "s", "x", "+"]
 color = ["r", "g", "b", "c", "m"]
-name = ["Ours_0.7", "Q-Path", "Q-Leap"]
+name = ["Ours", "Q-Path", "Q-Leap"]
 
 fontsize = 32
 Xlabel_fontsize = fontsize
