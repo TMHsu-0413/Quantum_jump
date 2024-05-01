@@ -1,7 +1,7 @@
 # 跳關的code
 
 - [題目及做法詳細說明，以2 state的部分為主](https://hackmd.io/w4bodB2OSc-Kn9Ftaamljw)
-
+- [24 Globecom version](https://drive.google.com/file/d/1LroMNr5LAPVdhsRvoWoj0Nxa3d0B9chS/view?usp=sharing)
 ## code
 
 ### WeinerState
