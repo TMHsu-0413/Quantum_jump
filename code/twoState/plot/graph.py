@@ -16,6 +16,8 @@ Ylabel_fontsize = fontsize
 Xticks_fontsize = fontsize
 Yticks_fontsize = fontsize
 
+plt.rcParams["font.family"] = "Times New Roman"
+plt.rcParams["font.size"] = 16
 plt.rcParams["figure.figsize"] = (7, 7)
 
 
@@ -68,6 +70,36 @@ def ans_point(ans, filename, th, x=0.5, y=1.0):
     plt.savefig(img_dir + "ans_scatter.png")
     plt.close()
     return mx_x, mx_y
+
+
+def multiColor(filename):
+    c = ["#2894ff", "#2894ff", "#2894ff", "#28ff28", "r", "g", "b"]
+    m = ["x", ".", "o", "v", "x"]
+    find = False
+
+    plt.xlabel("Fidelity")
+    plt.ylabel("Probability")
+    with open(filename, "r") as f:
+        line = f.readlines()
+        for l in line:
+            cur = l.split(" ")
+            if not find and int(cur[0]) == 4:
+                plt.vlines(x=0.8, ymin=0, ymax=1, linestyles="dashed", colors="red")
+                plt.savefig("test_all.eps", format="eps")
+                find = True
+            if float(cur[2]) == 0:
+                continue
+            plt.plot(
+                float(cur[2]),
+                float(cur[3]),
+                color=c[int(cur[0])],
+                marker=m[int(cur[1])],
+                markersize=8,
+            )
+
+    plt.vlines(x=0.8, ymin=0, ymax=1, linestyles="dashed", colors="red")
+    plt.savefig("test.png")
+    plt.close()
 
 
 def different_threshold(y, threshold, n):
@@ -500,6 +532,7 @@ def avg_purifyTime_dis(ans, dis, node, th):
     plt.close()
 
 
+# multiColor("scatterPoint_5nodes.ans")
 # RLBSP_point("output/RLBSPpoint.txt")
 # RLBSP_point("output/allpoint.txt")
 

@@ -35,12 +35,15 @@
 
 ```bash=
 cd quantum_jump/code/twoState
+mkdir output outputTxt plot/image
 ```
 
-- 一次產出輸入數字節點的資料，可帶多個，固定memory 10-14， prob 0.85-1
+- 一次產出輸入數字節點的資料，可帶多個，固定memory 5-9，swapping prob 0.7，threshold 0.8
 
 ```bash=
 python script.py {number of nodes} {number of nodes} ...
 ```
 
-- 畫出的圖會在./plot/image內
+- 會輸出所有的答案在outputTxt/內，並將\*.ans檔移到目錄的AOS/ans內
+- 執行AOS/plot/\*.py，目前只有放在paper上的圖在裡面
+- 散點圖在graph.py內的multiColor，需先執行script.py內的ans_plot_scatter function才可執行

@@ -162,7 +162,7 @@ def print_diffNode_prob(node, times):
         )
 
         f = open(f"outputTxt/different_threshold_{n}_nodes.ans", "w")
-        for i in range(len(rsp_7sum)):
+        for i in range(len(threshold)):
             f.write(f"{threshold[i]} {rsp_7sum[i]} {qPathsum[i]} {qLeapsum[i]} \n")
         # graph.execution_time_on_different_threshold( [rsp_7sum, rsp_9sum, qPathsum, qLeapsum], n, threshold,)
     # print_etodn(rsp_7,rsp_9,rsp_99, qPath, qLeap, node)
@@ -312,30 +312,41 @@ def ans_point_Scatter(node, th):
             "0.8",
         ]
     )
-
+    f = open(f"outputTxt/scatterPoint_{node}nodes.ans", "w")
+    memSet = [[8, 9], [6, 7], [4, 5], [2, 3]]
     qPath = defaultdict(lambda: defaultdict(list))
     qLeap = defaultdict(lambda: defaultdict(list))
-    rsp_5 = defaultdict(lambda: defaultdict(list))
     rsp_7 = defaultdict(lambda: defaultdict(list))
-    rsp_9 = defaultdict(lambda: defaultdict(list))
-    subprocess.run(["./output/RLBSP", "graph.txt", str(1)])
-    compile_and_run("graph.txt", th)
-    readResult(qPath, node, "qPath")
-    readResult(qLeap, node, "qLeap")
-    # readResult(rsp_5, node, "RSP", "0.50")
-    readResult(rsp_7, node, "RSP", "0.70")
-    # readResult(rsp_9, node, "RSP", "0.90")
+    ans = []
+    for i in range(4):
+        modify_memory("graph.txt", memSet[i])
+        subprocess.run(["./output/RLBSP", "graph.txt", str(th)])
+        compile_and_run("graph.txt", th)
+        readResult(qPath, node, "qPath")
+        readResult(qLeap, node, "qLeap")
+        readResult(rsp_7, node, "RSP", "0.70")
 
-    ans = [[] for _ in range(3)]
-    # ans[0] = [rsp_5["Fidelity"][node][0], rsp_5["Probability"][node][0]]
-    ans[0] = [rsp_7["Fidelity"][node][0], rsp_7["Probability"][node][0]]
-    # ans[1] = [rsp_9["Fidelity"][node][0], rsp_9["Probability"][node][0]]
-    ans[1] = [qPath["Fidelity"][node][0], qPath["Probability"][node][0]]
-    ans[2] = [qLeap["Fidelity"][node][0], qLeap["Probability"][node][0]]
+        with open("output/allpoint.txt", "r") as f2:
+            line = f2.readlines()
+            for l in line:
+                cur = l.split(" ")
+                f.write(f"{i} 1 {cur[0]} {cur[1]}")
 
-    # print(ans)
+    for i, (fi, p) in enumerate(
+        zip(rsp_7["Fidelity"][node], rsp_7["Probability"][node])
+    ):
+        f.write(f"4 2 {fi} {p}\n")
+    for i, (fi, p) in enumerate(
+        zip(qPath["Fidelity"][node], qPath["Probability"][node])
+    ):
+        f.write(f"5 3 {fi} {p}\n")
+    for i, (fi, p) in enumerate(
+        zip(qLeap["Fidelity"][node], qLeap["Probability"][node])
+    ):
+        f.write(f"6 4 {fi} {p}\n")
 
-    graph.ans_point(ans, "output/allpoint.txt", th)
+    # 這有時候會bug，印不出全部，可直接執行完再另外call一次
+    # graph.multiColor("outputTxt/scatterPoint_5nodes.ans")
 
 
 def avg_purify_time(node, th, swap_prob, times, mem):
@@ -522,8 +533,8 @@ def avg_purify_dis(node, th, swap_prob, avg_dis, times):
 
             readResult(qPath, node, "qPath")
             readResult(qLeap, node, "qLeap")
-            # readResult(rsp_5, node, "RSP", "0.50")
             readResult(rsp_7, node, "RSP", "0.70")
+            # readResult(rsp_5, node, "RSP", "0.50")
             # readResult(rsp_9, node, "RSP", "0.90")
 
             # ans[0][i] += calsum(rsp_5["PurTimes"][node][-1], 0, i)
@@ -554,29 +565,26 @@ if __name__ == "__main__":
     subprocess.run(["g++", "--std=c++17", "RLBSP/RLBSP.cpp", "-o", "output/RLBSP"])
 
     node_num = []
+    average_time = 25
     for i in range(1, len(sys.argv)):
         node_num.append(sys.argv[i])
-    # print_diffNode_prob(node_num, 1)
+    print_diffNode_prob(node_num, average_time)
 
-    average_time = 25
     swap_prob_list = [0.3, 0.4, 0.5, 0.6, 0.7]
     th_list = [0.7, 0.75, 0.8, 0.85, 0.9]
     th = 0.8
     swap_prob = 0.8
-    average_node = 2
+    average_node = 15
     for th in th_list:
         print_average_in_different_nodes([10, 12, 15, 17, 20], average_time, th)
     # print_answer_in_different_memory( [[5, 7], [8, 10], [11, 13]], average_time, average_node, th)
 
-    # print_diff_prob(swap_prob_list, th, average_node)
-    # ans_point_Scatter(5, 0.8)
-    ans_point_Scatter(7, 0.7)
+    print_diff_prob(swap_prob_list, th, average_node)
+    ans_point_Scatter(5, 0.8)
+    # ans_point_Scatter(7, 0.7)
 
-    """
     # 固定節點與swap prob，跑average_time次後取平均的purify次數
     # avg_purify_time( average_node, th, swap_prob, average_time, [[8, 10], [11, 13], [14, 16]])
     avg_entangle_dis(average_node, th, swap_prob, [10, 15, 20, 25, 30], average_time)
 
     avg_purify_dis(average_node, th, swap_prob, [10, 15, 20, 25, 30], average_time)
-    """
-
