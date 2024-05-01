@@ -5,13 +5,18 @@ import os
 import shutil
 from collections import defaultdict
 from plot import graph
+from plot.node_threshold import ChartGenerator as node_threshold
+from plot.dist_purify import ChartGenerator as dist_purify
+from plot.node_percent import ChartGenerator as node_percent
+from plot.dist_threshold import ChartGenerator as dist_threshold
+from plot.prob_threshold import ChartGenerator as prob_threshold
 import time
 
-average_time = 2
+average_time = 25
 swap_prob_list = [0.3, 0.4, 0.5, 0.6, 0.7]
 th_list = [0.7, 0.75, 0.8, 0.85, 0.9]
 th = 0.8
-swap_prob = 0.8
+swap_prob = 0.7
 average_node = 5
 
 delta = "0.70"
@@ -111,7 +116,6 @@ def modify_y_label(filename, y):
     with open(filename, "w+") as f:
         prev_y = 0
         j = 0
-        print(len(y), len(arr))
         for i, line in enumerate(arr):
             if i == 0:
                 f.write(str(line[0]))
@@ -151,6 +155,7 @@ def print_diffNode_prob(n):
         qPathsum[i] /= average_time
         qLeapsum[i] /= average_time
 
+    print(rsp_7sum)
     f = open(f"outputTxt/different_threshold_{n}_nodes.ans", "w")
     for i in range(len(threshold)):
         f.write(f"{threshold[i]} {rsp_7sum[i]} {qPathsum[i]} {qLeapsum[i]} \n")
@@ -211,7 +216,6 @@ def print_diff_prob(swap_prob_list, n):
                 f"testcase/graph{i}_{n}nodes.txt", f"testcase/graph{i}cp_{n}nodes.txt"
             )
             modify_swap_prob(f"testcase/graph{i}cp_{n}nodes.txt", str(p))
-
             compile_and_run(f"testcase/graph{i}cp_{n}nodes.txt", th)
             readResult(qPath, n, "qPath")
             readResult(qLeap, n, "qLeap")
@@ -225,6 +229,7 @@ def print_diff_prob(swap_prob_list, n):
         ans[1].append(qPathsum / average_time)
         ans[2].append(qLeapsum / average_time)
 
+    print(ans[0])
     # graph.find_diff_swapProb(ans, swap_prob_list, nodes, th)
     f = open("outputTxt/find_diff_swapProb.ans", "w")
     for i in range(len(swap_prob_list)):
@@ -232,29 +237,21 @@ def print_diff_prob(swap_prob_list, n):
 
 
 def ans_point_Scatter(node, th):
-    subprocess.run(
-        [
-            "python3",
-            "main.py",
-            "graph.txt",
-            str(node),
-            "5",
-            "9",
-            "0.3",
-            "0.8",
-            "0.8",
-        ]
-    )
     f = open(f"outputTxt/scatterPoint_{node}nodes.ans", "w")
     memSet = [[8, 9], [6, 7], [4, 5], [2, 3]]
     qPath = defaultdict(lambda: defaultdict(list))
     qLeap = defaultdict(lambda: defaultdict(list))
     rsp_7 = defaultdict(lambda: defaultdict(list))
     ans = []
+    shutil.copyfile(
+        f"testcase/graph0_{node}nodes.txt", f"testcase/graph0cp_{node}nodes.txt"
+    )
     for i in range(4):
-        modify_memory("graph.txt", memSet[i])
-        subprocess.run(["./output/RLBSP", "graph.txt", str(th)])
-        compile_and_run("graph.txt", th)
+        modify_memory(f"testcase/graph0cp_{node}nodes.txt", memSet[i])
+        subprocess.run(
+            ["./output/RLBSP", f"testcase/graph0cp_{node}nodes.txt", str(th)]
+        )
+        compile_and_run(f"testcase/graph0cp_{node}nodes.txt", th)
         readResult(qPath, node, "qPath")
         readResult(qLeap, node, "qLeap")
         readResult(rsp_7, node, "RSP", delta)
@@ -406,13 +403,29 @@ if __name__ == "__main__":
     for i in range(1, len(sys.argv)):
         generate_test_case(sys.argv[i])
         print_diffNode_prob(sys.argv[i])
+    print_diff_prob(swap_prob_list, sys.argv[1])
 
     for th in th_list:
         print_average_in_different_nodes([10, 12, 15, 17, 20])
-    print_diff_prob(swap_prob_list, sys.argv[1])
     ans_point_Scatter(5, 0.8)
     # ans_point_Scatter(7, 0.7)
 
     avg_entangle_dis([10, 15, 20, 25, 30], sys.argv[1])
     avg_purify_dis([10, 15, 20, 25, 30], sys.argv[1])
+
+    # plot
     graph.multiColor("outputTxt/scatterPoint_5nodes.ans")
+    for i in range(1, len(sys.argv)):
+        node_threshold(
+            f"outputTxt/different_threshold_{sys.argv[i]}_nodes.ans",
+            "Avg. Probability",
+            "Fidelity Threshold",
+        )
+    dist_purify("outputTxt/avg_purifyTime_dis.ans", "Avg. Purification", "Distance")
+    dist_threshold("outputTxt/avg_entangle_dis.ans", "Avg. Probability", "Distance")
+    prob_threshold(
+        "outputTxt/find_diff_swapProb.ans", "Avg. Probability", "Swap. Probability"
+    )
+    node_percent(
+        "outputTxt/find_answer_rate_on_0.8th.ans", "% of Feasible Sol.", "# Nodes"
+    )
