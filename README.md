@@ -35,10 +35,10 @@
 
 ```bash=
 cd quantum_jump/code/twoState
-mkdir output outputTxt plot/image
 ```
 
 - 一次產出輸入數字節點的資料，可帶多個，固定memory 5-9，swapping prob 0.7，threshold 0.8
+- 只有第一個參數會執行所有的function，後續的都只會執行print_diffNode_prob function
 
 ```bash=
 python script.py {number of nodes} {number of nodes} ...

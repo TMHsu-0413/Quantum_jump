@@ -8,7 +8,7 @@ import collections
 
 marker = ["o", "v", "s", "x", "+"]
 color = ["r", "g", "b", "c", "m"]
-name = ["Ours", "Q-Path", "Q-Leap"]
+name = ["NSPS", "Q-PATH", "Q-LEAP"]
 
 fontsize = 32
 Xlabel_fontsize = fontsize
@@ -18,7 +18,7 @@ Yticks_fontsize = fontsize
 
 plt.rcParams["font.family"] = "Times New Roman"
 plt.rcParams["font.size"] = 16
-plt.rcParams["figure.figsize"] = (7, 7)
+plt.rcParams["figure.figsize"] = (7, 4)
 
 
 def ans_point(ans, filename, th, x=0.5, y=1.0):
@@ -74,31 +74,69 @@ def ans_point(ans, filename, th, x=0.5, y=1.0):
 
 def multiColor(filename):
     c = ["#2894ff", "#2894ff", "#2894ff", "#28ff28", "r", "g", "b"]
-    m = ["x", ".", "o", "v", "x"]
-    find = False
+    m = ["x", ".", "o", "s", "v"]
 
+    used = collections.defaultdict(bool)
     plt.xlabel("Fidelity")
     plt.ylabel("Probability")
+    plt.tight_layout()
     with open(filename, "r") as f:
         line = f.readlines()
         for l in line:
             cur = l.split(" ")
+            """
             if not find and int(cur[0]) == 4:
                 plt.vlines(x=0.8, ymin=0, ymax=1, linestyles="dashed", colors="red")
                 plt.savefig("test_all.eps", format="eps")
                 find = True
+            """
             if float(cur[2]) == 0:
                 continue
-            plt.plot(
-                float(cur[2]),
-                float(cur[3]),
-                color=c[int(cur[0])],
-                marker=m[int(cur[1])],
-                markersize=8,
-            )
+            if float(cur[2]) < 0.8 and int(cur[0]) <= 2:
+                plt.plot(
+                    float(cur[2]),
+                    float(cur[3]),
+                    color="grey",
+                    marker=m[int(cur[1])],
+                )
+            elif float(cur[2]) < 0.8 and int(cur[0]) == 3:
+                plt.plot(
+                    float(cur[2]),
+                    float(cur[3]),
+                    color="black",
+                    marker=m[int(cur[1])],
+                )
+            elif float(cur[2]) >= 0.8 and int(cur[0]) <= 2:
+                plt.plot(
+                    float(cur[2]),
+                    float(cur[3]),
+                    color="gold",
+                    marker=m[int(cur[1])],
+                )
+            elif float(cur[2]) >= 0.8 and int(cur[0]) <= 3:
+                plt.plot(
+                    float(cur[2]),
+                    float(cur[3]),
+                    color="blueviolet",
+                    marker=m[int(cur[1])],
+                )
+            else:
+                plt.plot(
+                    float(cur[2]),
+                    float(cur[3]),
+                    color=c[int(cur[0])],
+                    marker=m[int(cur[1])],
+                    markerfacecolor="none",
+                    linestyle="-",
+                    markersize=8,
+                    label=name[int(cur[0]) - 4] if not used[int(cur[0])] else None,
+                )
+                used[int(cur[0])] = True
 
+    plt.tight_layout()
     plt.vlines(x=0.8, ymin=0, ymax=1, linestyles="dashed", colors="red")
-    plt.savefig("test.png")
+    plt.legend(loc="upper right", labelspacing=0.8)
+    plt.savefig("plot/image/scatter.png", dpi=1000)
     plt.close()
 
 
@@ -532,7 +570,8 @@ def avg_purifyTime_dis(ans, dis, node, th):
     plt.close()
 
 
-# multiColor("scatterPoint_5nodes.ans")
+if __name__ == "__main__":
+    multiColor("outputTxt/scatterPoint_5nodes.ans")
 # RLBSP_point("output/RLBSPpoint.txt")
 # RLBSP_point("output/allpoint.txt")
 
@@ -543,5 +582,6 @@ def avg_purifyTime_dis(ans, dis, node, th):
 # RLBSP_point("RLBSPpoint.txt")
 # plt.show()
 # plt.close()
+# %%
 # %%
 # %%
