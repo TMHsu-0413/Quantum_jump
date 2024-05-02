@@ -149,9 +149,9 @@ class ChartGenerator:
             Yinterval = Yinterval
             Yend = Yend
         else:
-            Yend = 0.1
+            Yend = 0.15
             Ystart = 0
-            Yinterval = 0.02
+            Yinterval = 0.03
 
         marker = ["o", "s", "v", "x"]
         linestyle = ["-", "--", ":"]

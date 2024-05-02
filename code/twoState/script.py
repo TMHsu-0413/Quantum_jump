@@ -12,10 +12,10 @@ from plot.dist_threshold import ChartGenerator as dist_threshold
 from plot.prob_threshold import ChartGenerator as prob_threshold
 import time
 
-average_time = 25
+average_time = 50
 swap_prob_list = [0.3, 0.4, 0.5, 0.6, 0.7]
 th_list = [0.7, 0.75, 0.8, 0.85, 0.9]
-th = 0.8
+th = 0.85
 swap_prob = 0.7
 average_node = 5
 
@@ -388,25 +388,36 @@ if __name__ == "__main__":
     def create_dir():
         try:
             os.makedirs("output")
+        except FileExistsError:
+            print("output exists")
+
+        try:
             os.makedirs("outputTxt")
+        except FileExistsError:
+            print("outputTxt exists")
+
+        try:
             os.makedirs("testcase")
+        except FileExistsError:
+            print("testcase exists")
+
+        try:
             os.makedirs("plot/image")
         except FileExistsError:
-            print("dir exists")
+            print("plot/image exists")
 
     create_dir()
     subprocess.run(["g++", "--std=c++17", "qPath/qPath.cpp", "-o", "output/qPath"])
     subprocess.run(["g++", "--std=c++17", "qLeap/qLeap.cpp", "-o", "output/qLeap"])
     subprocess.run(["g++", "--std=c++17", "RSP/RSP.cpp", "-o", "output/RSP"])
     subprocess.run(["g++", "--std=c++17", "RLBSP/RLBSP.cpp", "-o", "output/RLBSP"])
-
+    print_average_in_different_nodes([10, 12, 15, 17, 20])
+    node_percent( "outputTxt/find_answer_rate_on_0.85th.ans", "% of Feasible Sol.", "# Nodes")
     for i in range(1, len(sys.argv)):
         generate_test_case(sys.argv[i])
         print_diffNode_prob(sys.argv[i])
     print_diff_prob(swap_prob_list, sys.argv[1])
 
-    for th in th_list:
-        print_average_in_different_nodes([10, 12, 15, 17, 20])
     ans_point_Scatter(5, 0.8)
     # ans_point_Scatter(7, 0.7)
 
@@ -414,18 +425,15 @@ if __name__ == "__main__":
     avg_purify_dis([10, 15, 20, 25, 30], sys.argv[1])
 
     # plot
-    graph.multiColor("outputTxt/scatterPoint_5nodes.ans")
+    #graph.multiColor("outputTxt/scatterPoint_5nodes.ans")
     for i in range(1, len(sys.argv)):
         node_threshold(
             f"outputTxt/different_threshold_{sys.argv[i]}_nodes.ans",
             "Avg. Probability",
             "Fidelity Threshold",
         )
-    dist_purify("outputTxt/avg_purifyTime_dis.ans", "Avg. Purification", "Distance")
-    dist_threshold("outputTxt/avg_entangle_dis.ans", "Avg. Probability", "Distance")
+    dist_purify("outputTxt/avg_purifyTime_dis.ans", "Avg. Purification", "Distance (km)")
+    dist_threshold("outputTxt/avg_entangle_dis.ans", "Avg. Probability", "Distance (km)")
     prob_threshold(
         "outputTxt/find_diff_swapProb.ans", "Avg. Probability", "Swap. Probability"
-    )
-    node_percent(
-        "outputTxt/find_answer_rate_on_0.8th.ans", "% of Feasible Sol.", "# Nodes"
     )
